@@ -1,0 +1,28 @@
+==========================================================
+NETWORK DESIGN PRINCIPLES FOR FUTURE GROWTH (HLD/LLD)
+==========================================================
+
+1. HIERARCHICAL DESIGN (3-LAYER MODEL)
+--------------------------------------
+- Core: Optimized for high-speed switching only.
+- Distribution: Policy-based connectivity and aggregation.
+- Access: Layer 2/3 connectivity for end devices.
+* WHY: Allows you to add access switches without impacting the core.
+
+2. IP ADDRESSING & SUBNETTING
+-----------------------------
+- Always reserve 30% overhead for future hosts.
+- Use Summarizable IP blocks (Contiguous addresses).
+* WHY: Keeps Routing Tables small and efficient as you grow.
+
+3. PHYSICAL LAYER SCALABILITY
+-----------------------------
+- Use Fiber-Optic (SFP+/QSFP+) for inter-switch links.
+- Implement Switch Stacking (Cisco StackWise).
+* WHY: To increase port density, just "stack" another switch.
+
+4. SD-WAN & CLOUD READINESS
+---------------------------
+- Ensure hardware supports Telemetry and API-driven config.
+- Design Internet Edge with HA (High Availability).
+* WHY: Seamless migration to Cloud services in the future.

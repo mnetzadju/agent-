@@ -1,0 +1,63 @@
+﻿==========================================================
+REFINED BGP & ACCESS-LIST (ACL) SECURITY CONFIG
+Scenario: Internal VLANs accessing External Servers (ISP)
+Security Model: Least Privilege / Restricted Outbound
+==========================================================
+
+1. DEFINE INTERNAL TO EXTERNAL ACL
+-----------------------------------
+conf t
+ ! Define what the Internal Users can access on the Internet
+ ! VLAN 10 = Users, VLAN 20 = Servers
+ 
+ ip access-list extended ACL_INTERNAL_TO_EXTERNAL
+  remark *** ALLOW CORE SERVICES ***
+  permit udp 192.168.10.0 0.0.0.255 any eq domain (DNS)
+  permit tcp 192.168.10.0 0.0.0.255 any eq 80 (HTTP)
+  permit tcp 192.168.10.0 0.0.0.255 any eq 443 (HTTPS)
+  
+  remark *** ALLOW EMAIL SERVICES FOR SERVERS ***
+  permit tcp 192.168.20.0 0.0.0.255 any eq 25 (SMTP)
+  permit tcp 192.168.20.0 0.0.0.255 any eq 587 (Secure SMTP)
+  
+  remark *** ALLOW PING FOR TROUBLESHOOTING ***
+  permit icmp 192.168.0.0 0.0.255.255 any echo
+  permit icmp 192.168.0.0 0.0.255.255 any echo-reply
+  
+  remark *** DENY ALL OTHER TRAFFIC WITH LOGGING ***
+  deny ip any any log
+
+2. APPLY ACL TO INTERNAL INTERFACES (Ingress)
+----------------------------------------------
+interface GigabitEthernet0/0/1.10
+ description *** INTERNAL USER VLAN ***
+ ip access-group ACL_INTERNAL_TO_EXTERNAL in
+ !
+ interface GigabitEthernet0/0/1.20
+ description *** INTERNAL SERVER VLAN ***
+ ip access-group ACL_INTERNAL_TO_EXTERNAL in
+
+3. REFINED BGP CONFIG (Linked with ACL Logic)
+----------------------------------------------
+router bgp 65001
+ address-family ipv4
+  # Only advertise internal networks that are allowed by security policy
+  network 192.168.10.0 mask 255.255.255.0
+  network 192.168.20.0 mask 255.255.255.0
+  
+  # Ensure neighbor security
+  neighbor 10.255.255.2 prefix-list PL_OUT_TO_ISP out
+ exit-address-family
+
+4. VERIFICATION & MONITORING
+-----------------------------
+# Check if ACL is hitting (Counter check):
+show ip access-lists ACL_INTERNAL_TO_EXTERNAL
+
+# Monitor denied traffic in real-time:
+term mon
+show logging | include ACL_INTERNAL_TO_EXTERNAL
+
+# Verify BGP advertisement matches the ACL:
+show ip bgp neighbors 10.255.255.2 advertised-routes
+==========================================================

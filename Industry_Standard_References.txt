@@ -1,0 +1,27 @@
+==========================================================
+EXPERT NETWORK AGENT: INDUSTRY REFERENCE LIBRARY
+==========================================================
+
+1. ROUTING & SWITCHING STANDARDS (IETF RFCs)
+--------------------------------------------
+- BGP-4: RFC 4271 (https://datatracker.ietf.org/doc/html/rfc4271)
+- OSPFv2: RFC 2328 (https://datatracker.ietf.org/doc/html/rfc2328)
+- IPv6 Architecture: RFC 4291
+- First Hop Redundancy (FHRP): RFC 5798 (VRRP)
+
+2. SECURITY BENCHMARKS & HARDENING
+----------------------------------
+- CIS Cisco IOS Benchmark: https://www.cisecurity.org/benchmarks
+- DISA STIGs (Department of Defense): https://public.cyber.mil/stigs/
+- NIST SP 800-53 (Security Controls): https://csrc.nist.gov/
+
+3. CLOUD & SD-WAN ARCHITECTURE
+------------------------------
+- Cisco SD-WAN (Viptela) Design: https://www.cisco.com/c/en/us/td/docs/solutions/CVD/SDWAN/cisco-sdwan-design-guide.html
+- Azure ExpressRoute Documentation: https://learn.microsoft.com/en-us/azure/expressroute/
+- AWS Direct Connect Architecture: https://aws.amazon.com/directconnect/
+
+4. TELEMETRY & AUTOMATION
+-------------------------
+- gRPC Dial-out: https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/prog/configuration/1610/b_1610_programmability_cg.html
+- Netmiko Documentation: https://ktbyers.github.io/netmiko/

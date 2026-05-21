@@ -1,0 +1,68 @@
+﻿==========================================================
+ENTERPRISE CONTROL PLANE POLICING (CoPP) HARDENING
+Target: Cisco IOS-XE (Catalyst 9000 / ISR 4000)
+Purpose: Protect Router CPU from DoS and Traffic Spikes
+==========================================================
+
+1. DEFINE CLASS-MAPS (The Buckets)
+----------------------------------
+conf t
+ ! ACL for Critical Routing Protocols
+ ip access-list extended ACL_COPP_CRITICAL
+  permit ospf any any
+  permit tcp any any eq 179
+  permit tcp any eq 179 any
+  permit udp any any eq 1985 (HSRP)
+ 
+ ! ACL for Management Traffic
+ ip access-list extended ACL_COPP_MGMT
+  permit tcp any any eq 22 (SSH)
+  permit udp any any eq 161 (SNMP)
+  permit udp any any eq 123 (NTP)
+ 
+ ! ACL for General/Undesirable Traffic
+ ip access-list extended ACL_COPP_GENERAL
+  permit icmp any any
+
+2. DEFINE CLASS-MAPS
+---------------------
+ class-map match-all CLASS_COPP_CRITICAL
+  match access-group name ACL_COPP_CRITICAL
+ !
+ class-map match-all CLASS_COPP_MGMT
+  match access-group name ACL_COPP_MGMT
+ !
+ class-map match-all CLASS_COPP_GENERAL
+  match access-group name ACL_COPP_GENERAL
+
+3. DEFINE POLICY-MAP (The Action/Limits)
+-----------------------------------------
+ policy-map POLICY_COPP_HARDENING
+  class CLASS_COPP_CRITICAL
+   police 1000000 conform-action transmit exceed-action transmit
+  !
+  class CLASS_COPP_MGMT
+   police 256000 conform-action transmit exceed-action drop
+  !
+  class CLASS_COPP_GENERAL
+   police 64000 conform-action transmit exceed-action drop
+  !
+  class class-default
+   police 32000 conform-action transmit exceed-action drop
+
+4. APPLY TO CONTROL-PLANE
+--------------------------
+ control-plane
+  service-policy input POLICY_COPP_HARDENING
+
+5. VERIFICATION COMMANDS
+-------------------------
+# Check if the policy is active and dropping bad traffic:
+show policy-map control-plane
+
+# Check CPU usage (Should be stable even during pings):
+show processes cpu sorted
+
+# Verify individual class statistics:
+show policy-map control-plane class CLASS_COPP_GENERAL
+==========================================================

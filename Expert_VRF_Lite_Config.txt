@@ -1,0 +1,102 @@
+﻿==========================================================
+EXPERT VRF-LITE CONFIGURATION (MULTI-TENANT DESIGN)
+Architecture: 2 Routers (R1, R2) + 1 Layer 2/3 Switch (SW)
+Target: Network Segmentation & Routing Isolation
+==========================================================
+
+1. ROUTER 1 (R1) - VRF DEFINITION & INTERFACES
+-----------------------------------------------
+conf t
+ ! Define VRFs with Address Family
+ vrf definition VRF_RED
+  rd 100:1
+  address-family ipv4
+  exit-address-family
+ !
+ vrf definition VRF_BLUE
+  rd 100:2
+  address-family ipv4
+  exit-address-family
+
+ ! Configure Sub-interfaces (Trunk to Switch)
+ interface GigabitEthernet0/0/1
+  no shutdown
+ !
+ interface GigabitEthernet0/0/1.10
+  description *** VRF RED TRAFFIC ***
+  encapsulation dot1Q 10
+  vrf forwarding VRF_RED
+  ip address 10.10.10.1 255.255.255.252
+ !
+ interface GigabitEthernet0/0/1.20
+  description *** VRF BLUE TRAFFIC ***
+  encapsulation dot1Q 20
+  vrf forwarding VRF_BLUE
+  ip address 10.10.20.1 255.255.255.252
+
+ ! Routing Instance (OSPF per VRF)
+ router ospf 10 vrf VRF_RED
+  network 10.10.10.0 0.0.0.3 area 0
+ !
+ router ospf 20 vrf VRF_BLUE
+  network 10.10.20.0 0.0.0.3 area 0
+
+2. ROUTER 2 (R2) - VRF DEFINITION & INTERFACES
+-----------------------------------------------
+conf t
+ vrf definition VRF_RED
+  rd 200:1
+  address-family ipv4
+  exit-address-family
+ !
+ vrf definition VRF_BLUE
+  rd 200:2
+  address-family ipv4
+  exit-address-family
+
+ interface GigabitEthernet0/0/1
+  no shutdown
+ !
+ interface GigabitEthernet0/0/1.10
+  encapsulation dot1Q 10
+  vrf forwarding VRF_RED
+  ip address 10.10.10.2 255.255.255.252
+ !
+ interface GigabitEthernet0/0/1.20
+  encapsulation dot1Q 20
+  vrf forwarding VRF_BLUE
+  ip address 10.10.20.2 255.255.255.252
+
+ router ospf 10 vrf VRF_RED
+  network 10.10.10.0 0.0.0.3 area 0
+ !
+ router ospf 20 vrf VRF_BLUE
+  network 10.10.20.0 0.0.0.3 area 0
+
+3. LAYER 2 SWITCH (SW) - VLAN & TRUNK CONFIG
+----------------------------------------------
+vlan 10
+ name RED_VLAN
+vlan 20
+ name BLUE_VLAN
+
+ ! Ports to R1 and R2 configured as Trunks
+ interface range GigabitEthernet0/1 - 2
+  switchport mode trunk
+  switchport trunk allowed vlan 10,20
+  spanning-tree portfast trunk
+
+4. EXPERT VERIFICATION COMMANDS
+--------------------------------
+# View isolated routing tables:
+show ip route vrf VRF_RED
+show ip route vrf VRF_BLUE
+
+# Verify OSPF Adjacency per VRF:
+show ip ospf neighbor vrf VRF_RED
+
+# Test Connectivity (Ping from VRF context):
+ping vrf VRF_RED 10.10.10.2
+ping vrf VRF_BLUE 10.10.20.2
+
+==========================================================

@@ -1,0 +1,7 @@
+﻿# Excel temporary files
+~$*
+.DS_Store
+*.tmp
+# Python cache
+__pycache__/
+*.py[cod]

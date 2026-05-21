@@ -1,0 +1,60 @@
+﻿==========================================================
+CISCO GOLD STANDARD USER INTERFACE CONFIGURATION
+Includes: Data, Voice, Dot1x, and Port-Security (Sticky)
+==========================================================
+
+1. GLOBAL CONFIGURATION (Run this once per switch)
+--------------------------------------------------
+aaa new-model
+aaa authentication dot1x default group radius
+aaa authorization network default group radius
+dot1x system-auth-control
+ip device tracking
+
+vlan 10
+ name DATA_VLAN
+vlan 20
+ name VOICE_VLAN
+
+2. INTERFACE CONFIGURATION (Apply to User Ports)
+--------------------------------------------------
+interface GigabitEthernet1/0/1
+ description *** ACCESS_PORT_W_VOICE_DOT1X ***
+ 
+ # Access & Voice VLAN Assignment
+ switchport mode access
+ switchport access vlan 10
+ switchport voice vlan 20
+ 
+ # Port Security (MAC Sticky)
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ # Note: This will learn 1 MAC for PC and 1 MAC for Phone
+ 
+ # 802.1X (Dot1x) and MAB Configuration
+ authentication port-control auto
+ authentication periodic
+ authentication timer reauthenticate server
+ mab
+ dot1x pae authenticator
+ dot1x timeout tx-period 10
+ 
+ # Spanning-Tree & Performance
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ 
+ # QoS for Voice (Auto-QoS)
+ auto qos voip cisco-phone
+ service-policy input AutoQos-4.0-CiscoPhone-Input-Policy
+ service-policy output AutoQos-4.0-CiscoPhone-Output-Policy
+
+3. VERIFICATION COMMANDS
+-------------------------
+show interface Gi1/0/1 switchport
+show dot1x all summary
+show authentication sessions interface Gi1/0/1
+show port-security interface Gi1/0/1
+show port-security address
+==========================================================

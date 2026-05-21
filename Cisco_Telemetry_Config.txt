@@ -1,0 +1,38 @@
+==========================================================
+CISCO MODEL-DRIVEN TELEMETRY (MDT) CONFIGURATION GUIDE
+Device: Cisco IOS XE (Catalyst 9000 / ISR 4000)
+Method: gRPC Dial-out (Push Method)
+==========================================================
+
+1. ENABLE NETCONF/RESTCONF (Foundation)
+----------------------------------------
+conf t
+ netconf-yang
+ restconf
+ ip http secure-server
+
+2. CONFIGURE SENSOR GROUP (What to monitor)
+-------------------------------------------
+telemetry model-driven
+ sensor-group 101
+  path Cisco-IOS-XE-interfaces-oper:interfaces/interface/statistics
+  path Cisco-IOS-XE-process-cpu-oper:cpu-usage/cpu-utilization
+
+3. CONFIGURE RECEIVER (Where to send data)
+------------------------------------------
+ receiver ip address 10.10.10.10 57500 protocol grpc-tcp
+
+4. CONFIGURE SUBSCRIPTION (Linking everything)
+-----------------------------------------------
+ subscription 501
+  sensor-group 101 sample-interval 1000  <-- (1000ms = 1 second streaming)
+  receiver ip address 10.10.10.10 57500
+
+5. VERIFICATION COMMANDS
+-------------------------
+ show telemetry model-driven subscription 501
+ show telemetry model-driven summary
+ show netconf-yang statistics
+
+Note: Sample-interval of 1000ms is high-frequency. For production, 
+consider 5000ms to 30000ms depending on bandwidth availability.

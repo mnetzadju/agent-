@@ -1,0 +1,62 @@
+﻿==========================================================
+CISCO STACKWISE EXPERT CONFIGURATION & TROUBLESHOOTING
+Scenario: 2 x Catalyst 9300/3850 (Physical Stacking)
+==========================================================
+
+1. PRE-STAKING CONFIGURATION (Run on each switch separately)
+------------------------------------------------------------
+# On Switch 1 (Desired Master/Active)
+conf t
+ switch 1 priority 15
+ exit
+ write mem
+
+# On Switch 2 (Desired Member/Standby)
+conf t
+ switch 1 renumber 2
+ exit
+# Reload Switch 2 to apply number change
+reload
+
+# After Switch 2 reboots, set priority
+conf t
+ switch 2 priority 14
+ exit
+ write mem
+
+2. PHYSICAL CABLING
+--------------------
+- Power OFF both switches.
+- Connect StackWise cables in a "Ring" topology:
+  - SW1 Stack Port 1 -> SW2 Stack Port 2
+  - SW1 Stack Port 2 -> SW2 Stack Port 1
+- Power ON Switch 1 (Wait 2 minutes)
+- Power ON Switch 2
+
+3. PROVISIONING (Pre-configuring ports for a member)
+-----------------------------------------------------
+# Run on the Master to pre-configure SW2 ports even if it's offline
+conf t
+ switch 2 provision c9300-48p
+
+4. EXPERT TROUBLESHOOTING COMMANDS
+-----------------------------------
+# Check overall stack status (Role, MAC, Priority, State)
+show switch
+
+# Check Stack Ring bandwidth (e.g., 480Gbps)
+show switch stack-ring speed
+
+# Check physical stack port status (Up/Down)
+show switch stack-ports
+
+# Detailed stack health and hardware info
+show switch detail
+
+# Verify Stack Convergence (Reason for role assignment)
+show switch stack-mode
+
+# To see stack-related logs/events
+show logging | include STACK
+
+==========================================================

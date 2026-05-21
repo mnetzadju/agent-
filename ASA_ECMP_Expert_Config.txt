@@ -1,0 +1,57 @@
+﻿==========================================================
+CISCO ASA ECMP CONFIGURATION (EXPERT LEVEL)
+Feature: ECMP with Traffic Zones (ASA 9.0+)
+Scenario: Dual ISP Load Balancing (ISP-1 and ISP-2)
+==========================================================
+
+1. CONFIGURE INTERFACES
+------------------------
+conf t
+ interface GigabitEthernet0/0
+  nameif outside-1
+  security-level 0
+  ip address 1.1.1.2 255.255.255.252
+ !
+ interface GigabitEthernet0/1
+  nameif outside-2
+  security-level 0
+  ip address 2.2.2.2 255.255.255.252
+
+2. CREATE TRAFFIC ZONE (The "Secret Sauce")
+-------------------------------------------
+# Binibigkis nito ang dalawang ISP interface para maiwasan ang drops sa asymmetric routing.
+zone OUTSIDE-ZONE
+ interface outside-1
+ interface outside-2
+
+3. CONFIGURE ECMP STATIC ROUTES
+--------------------------------
+# Dapat pareho ang Metric (1) para maging "Equal Cost".
+route outside-1 0.0.0.0 0.0.0.0 1.1.1.1 1
+route outside-2 0.0.0.0 0.0.0.0 2.2.2.1 1
+
+4. OPTIONAL: ENABLE TCP STATE BYPASS (If needed for extreme asymmetry)
+-----------------------------------------------------------------------
+# Karaniwan ay hindi na ito kailangan kung nasa Zone na, pero ito ay backup plan.
+access-list TCP_BYPASS extended permit ip any any
+class-map TCP_BYPASS_CLASS
+ match access-list TCP_BYPASS
+policy-map global_policy
+ class TCP_BYPASS_CLASS
+  set connection advanced-options tcp-state-bypass
+
+5. EXPERT VERIFICATION COMMANDS
+--------------------------------
+# Check if both routes are in the Routing Table:
+show route
+
+# Check the Traffic Zone configuration:
+show zone
+
+# Monitor connection distribution across interfaces:
+show conn
+show asp table routing
+
+# Verification of ECMP (Should show multiple next-hops):
+show route 0.0.0.0
+==========================================================
