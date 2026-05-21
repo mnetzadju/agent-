@@ -1,0 +1,2567 @@
+================================================================================
+CISCO NEXUS VIRTUAL PORT CHANNEL (vPC) - DUAL SWITCH CONFIGURATION
+Operating as Single Logical Switch
+Complete Protocol Configuration with All Features
+================================================================================
+
+!===============================================================================
+! NEXUS SWITCH 1 (PRIMARY) - CONFIGURATION
+! Hostname: NEXUS-SWITCH-01
+! Role: vPC Primary (Peer Link Primary)
+!===============================================================================
+
+hostname NEXUS-SWITCH-01
+
+!===============================================================================
+! BASIC CONFIGURATION & SYSTEM SETTINGS
+!===============================================================================
+no ip domain-lookup
+ip domain-name company.local
+service timestamps log datetime msec
+service timestamps debug datetime msec
+logging level local7 notifications
+
+cli alias name wr copy run start
+
+!===============================================================================
+! FEATURE ENABLEMENT
+!===============================================================================
+feature ssh
+feature telnet
+feature ntp
+feature snmp
+feature syslog
+feature udld
+feature lacp
+feature lldp
+feature interface-vlan
+feature vlan
+feature vpc
+feature ospf
+feature bgp
+feature eigrp
+feature rip
+feature pim
+feature hsrp
+feature hsrp-v2
+feature fex
+feature mpls
+feature mpls-ldp
+feature qos
+feature netflow
+feature span
+feature copp
+
+!===============================================================================
+! SWITCH ROLE & MODE CONFIGURATION
+!===============================================================================
+system jumbomtu 9216
+
+! Role: This is Primary vPC Switch
+role name vpc-admin
+  description VPC Administrator
+  rule 1 permit read-write feature-area vpc
+
+spanning-tree mode rapid-pvst
+spanning-tree pathcost method long
+spanning-tree port type edge bpduguard default
+spanning-tree port type edge bpdufilter default
+spanning-tree vlan 1 priority 4096
+
+!===============================================================================
+! VPC CONFIGURATION - NEXUS SWITCH 1 (PRIMARY)
+!===============================================================================
+! VPC Peer Link Configuration (Primary)
+vpc domain 1
+  peer-switch
+  role priority 1
+  peer-keepalive destination 10.160.10.2 source 10.160.10.1
+  delay restore 150
+  delay restore interface-vlan 60
+  auto-recovery
+
+! Create vPC Peer Link Interface (Port Channel 1)
+interface port-channel 1
+  description vPC Peer Link to NEXUS-SWITCH-02
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  spanning-tree port type network
+  vpc peer-link
+  speed 40000
+  duplex full
+  mtu 9216
+  no shutdown
+
+! Physical Interfaces for vPC Peer Link
+interface Ethernet1/1
+  description vPC Peer Link - Nexus-02 Port 1
+  switchport mode trunk
+  channel-group 1 mode active
+  no shutdown
+
+interface Ethernet1/2
+  description vPC Peer Link - Nexus-02 Port 2
+  switchport mode trunk
+  channel-group 1 mode active
+  no shutdown
+
+!===============================================================================
+! VLAN DEFINITIONS (50 VLANs)
+!===============================================================================
+vlan 1
+  name Management
+vlan 10
+  name Server_Farm_10
+vlan 11
+  name Server_Farm_11
+vlan 12
+  name Server_Farm_12
+vlan 13
+  name Server_Farm_13
+vlan 14
+  name Server_Farm_14
+vlan 15
+  name Server_Farm_15
+vlan 20
+  name Database_Primary
+vlan 21
+  name Database_Secondary
+vlan 22
+  name Database_Replication
+vlan 30
+  name DMZ_External
+vlan 31
+  name DMZ_Internal
+vlan 32
+  name DMZ_Staging
+vlan 40
+  name Security_IDS_IPS
+vlan 41
+  name Firewall_Management
+vlan 42
+  name Security_Monitoring
+vlan 50
+  name Backup_Storage
+vlan 51
+  name Backup_Replication
+vlan 52
+  name Archive_Storage
+vlan 60
+  name Voice_VoIP_10
+vlan 61
+  name Voice_VoIP_11
+vlan 62
+  name Voice_VoIP_12
+vlan 70
+  name Video_Streaming
+vlan 71
+  name Video_Conferencing
+vlan 80
+  name Guest_Network
+vlan 81
+  name Guest_Secure
+vlan 90
+  name Development_Lab
+vlan 91
+  name Testing_Lab
+vlan 92
+  name Staging_Lab
+vlan 100
+  name Finance_Department
+vlan 101
+  name HR_Department
+vlan 102
+  name Marketing_Department
+vlan 103
+  name Sales_Department
+vlan 104
+  name Engineering_Department
+vlan 105
+  name Operations_Department
+vlan 110
+  name Building_A_Floor1
+vlan 111
+  name Building_A_Floor2
+vlan 112
+  name Building_A_Floor3
+vlan 120
+  name Building_B_Floor1
+vlan 121
+  name Building_B_Floor2
+vlan 130
+  name Wireless_SSID_Corp
+vlan 131
+  name Wireless_SSID_Guest
+vlan 140
+  name IoT_Sensors
+vlan 141
+  name IoT_Devices
+vlan 150
+  name Management_OOB
+vlan 151
+  name Monitoring_SNMP
+vlan 160
+  name WAN_Link_1
+vlan 161
+  name WAN_Link_2
+vlan 162
+  name WAN_Link_3
+vlan 170
+  name Reserved_Future_1
+vlan 171
+  name Reserved_Future_2
+vlan 172
+  name Reserved_Future_3
+
+!===============================================================================
+! VLAN SVI CONFIGURATION (Layer 3 Interfaces) - NEXUS-SWITCH-01
+!===============================================================================
+interface Vlan1
+  description Management Network
+  ip address 10.1.1.1 255.255.255.0
+  ip access-group VLAN1-ACL in
+  no shutdown
+
+interface Vlan10
+  description Server Farm 10
+  ip address 10.10.0.1 255.255.255.0
+  ip access-group VLAN10-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 10
+    priority 120
+    preempt
+    timers 3 10
+    ip 10.10.0.254
+  no shutdown
+
+interface Vlan11
+  description Server Farm 11
+  ip address 10.10.1.1 255.255.255.0
+  ip access-group VLAN11-ACL in
+  no shutdown
+
+interface Vlan12
+  description Server Farm 12
+  ip address 10.10.2.1 255.255.255.0
+  ip access-group VLAN12-ACL in
+  no shutdown
+
+interface Vlan13
+  description Server Farm 13
+  ip address 10.10.3.1 255.255.255.0
+  ip access-group VLAN13-ACL in
+  no shutdown
+
+interface Vlan14
+  description Server Farm 14
+  ip address 10.10.4.1 255.255.255.0
+  ip access-group VLAN14-ACL in
+  no shutdown
+
+interface Vlan15
+  description Server Farm 15
+  ip address 10.10.5.1 255.255.255.0
+  ip access-group VLAN15-ACL in
+  no shutdown
+
+interface Vlan20
+  description Database Primary
+  ip address 10.20.0.1 255.255.255.0
+  ip access-group VLAN20-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 20
+    priority 120
+    preempt
+    timers 3 10
+    ip 10.20.0.254
+  no shutdown
+
+interface Vlan21
+  description Database Secondary
+  ip address 10.20.1.1 255.255.255.0
+  ip access-group VLAN21-ACL in
+  no shutdown
+
+interface Vlan22
+  description Database Replication
+  ip address 10.20.2.1 255.255.255.0
+  ip access-group VLAN22-ACL in
+  no shutdown
+
+interface Vlan30
+  description DMZ External
+  ip address 10.30.0.1 255.255.255.0
+  ip access-group VLAN30-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 30
+    priority 120
+    preempt
+    timers 3 10
+    ip 10.30.0.254
+  no shutdown
+
+interface Vlan31
+  description DMZ Internal
+  ip address 10.30.1.1 255.255.255.0
+  ip access-group VLAN31-ACL in
+  no shutdown
+
+interface Vlan32
+  description DMZ Staging
+  ip address 10.30.2.1 255.255.255.0
+  ip access-group VLAN32-ACL in
+  no shutdown
+
+interface Vlan40
+  description Security IDS IPS
+  ip address 10.40.0.1 255.255.255.0
+  ip access-group VLAN40-ACL in
+  no shutdown
+
+interface Vlan41
+  description Firewall Management
+  ip address 10.40.1.1 255.255.255.0
+  ip access-group VLAN41-ACL in
+  no shutdown
+
+interface Vlan42
+  description Security Monitoring
+  ip address 10.40.2.1 255.255.255.0
+  ip access-group VLAN42-ACL in
+  no shutdown
+
+interface Vlan50
+  description Backup Storage
+  ip address 10.50.0.1 255.255.255.0
+  ip access-group VLAN50-ACL in
+  no shutdown
+
+interface Vlan51
+  description Backup Replication
+  ip address 10.50.1.1 255.255.255.0
+  ip access-group VLAN51-ACL in
+  no shutdown
+
+interface Vlan52
+  description Archive Storage
+  ip address 10.50.2.1 255.255.255.0
+  ip access-group VLAN52-ACL in
+  no shutdown
+
+interface Vlan60
+  description Voice VoIP 10
+  ip address 10.60.0.1 255.255.255.0
+  ip access-group VLAN60-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 60
+    priority 120
+    preempt
+    timers 3 10
+    ip 10.60.0.254
+  no shutdown
+
+interface Vlan61
+  description Voice VoIP 11
+  ip address 10.60.1.1 255.255.255.0
+  ip access-group VLAN61-ACL in
+  no shutdown
+
+interface Vlan62
+  description Voice VoIP 12
+  ip address 10.60.2.1 255.255.255.0
+  ip access-group VLAN62-ACL in
+  no shutdown
+
+interface Vlan70
+  description Video Streaming
+  ip address 10.70.0.1 255.255.255.0
+  ip access-group VLAN70-ACL in
+  no shutdown
+
+interface Vlan71
+  description Video Conferencing
+  ip address 10.70.1.1 255.255.255.0
+  ip access-group VLAN71-ACL in
+  no shutdown
+
+interface Vlan80
+  description Guest Network
+  ip address 10.80.0.1 255.255.255.0
+  ip access-group VLAN80-ACL in
+  no shutdown
+
+interface Vlan81
+  description Guest Secure
+  ip address 10.80.1.1 255.255.255.0
+  ip access-group VLAN81-ACL in
+  no shutdown
+
+interface Vlan90
+  description Development Lab
+  ip address 10.90.0.1 255.255.255.0
+  ip access-group VLAN90-ACL in
+  no shutdown
+
+interface Vlan91
+  description Testing Lab
+  ip address 10.90.1.1 255.255.255.0
+  ip access-group VLAN91-ACL in
+  no shutdown
+
+interface Vlan92
+  description Staging Lab
+  ip address 10.90.2.1 255.255.255.0
+  ip access-group VLAN92-ACL in
+  no shutdown
+
+interface Vlan100
+  description Finance Department
+  ip address 10.100.0.1 255.255.255.0
+  ip access-group VLAN100-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 100
+    priority 120
+    preempt
+    timers 3 10
+    ip 10.100.0.254
+  no shutdown
+
+interface Vlan101
+  description HR Department
+  ip address 10.100.1.1 255.255.255.0
+  ip access-group VLAN101-ACL in
+  no shutdown
+
+interface Vlan102
+  description Marketing Department
+  ip address 10.100.2.1 255.255.255.0
+  ip access-group VLAN102-ACL in
+  no shutdown
+
+interface Vlan103
+  description Sales Department
+  ip address 10.100.3.1 255.255.255.0
+  ip access-group VLAN103-ACL in
+  no shutdown
+
+interface Vlan104
+  description Engineering Department
+  ip address 10.100.4.1 255.255.255.0
+  ip access-group VLAN104-ACL in
+  no shutdown
+
+interface Vlan105
+  description Operations Department
+  ip address 10.100.5.1 255.255.255.0
+  ip access-group VLAN105-ACL in
+  no shutdown
+
+interface Vlan110
+  description Building A Floor 1
+  ip address 10.110.0.1 255.255.255.0
+  ip access-group VLAN110-ACL in
+  no shutdown
+
+interface Vlan111
+  description Building A Floor 2
+  ip address 10.110.1.1 255.255.255.0
+  ip access-group VLAN111-ACL in
+  no shutdown
+
+interface Vlan112
+  description Building A Floor 3
+  ip address 10.110.2.1 255.255.255.0
+  ip access-group VLAN112-ACL in
+  no shutdown
+
+interface Vlan120
+  description Building B Floor 1
+  ip address 10.120.0.1 255.255.255.0
+  ip access-group VLAN120-ACL in
+  no shutdown
+
+interface Vlan121
+  description Building B Floor 2
+  ip address 10.120.1.1 255.255.255.0
+  ip access-group VLAN121-ACL in
+  no shutdown
+
+interface Vlan130
+  description Wireless SSID Corp
+  ip address 10.130.0.1 255.255.255.0
+  ip access-group VLAN130-ACL in
+  no shutdown
+
+interface Vlan131
+  description Wireless SSID Guest
+  ip address 10.130.1.1 255.255.255.0
+  ip access-group VLAN131-ACL in
+  no shutdown
+
+interface Vlan140
+  description IoT Sensors
+  ip address 10.140.0.1 255.255.255.0
+  ip access-group VLAN140-ACL in
+  no shutdown
+
+interface Vlan141
+  description IoT Devices
+  ip address 10.140.1.1 255.255.255.0
+  ip access-group VLAN141-ACL in
+  no shutdown
+
+interface Vlan150
+  description Management OOB
+  ip address 10.150.0.1 255.255.255.0
+  ip access-group VLAN150-ACL in
+  no shutdown
+
+interface Vlan151
+  description Monitoring SNMP
+  ip address 10.150.1.1 255.255.255.0
+  ip access-group VLAN151-ACL in
+  no shutdown
+
+interface Vlan160
+  description WAN Link 1 (MPLS)
+  ip address 10.160.0.1 255.255.255.0
+  ip access-group VLAN160-ACL in
+  no shutdown
+
+interface Vlan161
+  description WAN Link 2 (BGP)
+  ip address 10.160.1.1 255.255.255.0
+  ip access-group VLAN161-ACL in
+  no shutdown
+
+interface Vlan162
+  description WAN Link 3 (Backup)
+  ip address 10.160.2.1 255.255.255.0
+  ip access-group VLAN162-ACL in
+  no shutdown
+
+interface Vlan170
+  description Reserved Future 1
+  ip address 10.170.0.1 255.255.255.0
+  ip access-group VLAN170-ACL in
+  no shutdown
+
+interface Vlan171
+  description Reserved Future 2
+  ip address 10.170.1.1 255.255.255.0
+  ip access-group VLAN171-ACL in
+  no shutdown
+
+interface Vlan172
+  description Reserved Future 3
+  ip address 10.170.2.1 255.255.255.0
+  ip access-group VLAN172-ACL in
+  no shutdown
+
+!===============================================================================
+! UPLINK PORT CHANNELS FOR NEXUS-SWITCH-01
+!===============================================================================
+! Port Channel to Core Switch 1
+interface port-channel 10
+  description Uplink to Core Switch 1 (vPC 10)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  vpc 10
+  mtu 9216
+  speed 40000
+  duplex full
+  no shutdown
+
+interface Ethernet2/1
+  description Uplink to Core Switch 1 - Port 1
+  switchport mode trunk
+  channel-group 10 mode active
+  no shutdown
+
+interface Ethernet2/2
+  description Uplink to Core Switch 1 - Port 2
+  switchport mode trunk
+  channel-group 10 mode active
+  no shutdown
+
+! Port Channel to Core Switch 2
+interface port-channel 11
+  description Uplink to Core Switch 2 (vPC 11)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  vpc 11
+  mtu 9216
+  speed 40000
+  duplex full
+  no shutdown
+
+interface Ethernet2/3
+  description Uplink to Core Switch 2 - Port 1
+  switchport mode trunk
+  channel-group 11 mode active
+  no shutdown
+
+interface Ethernet2/4
+  description Uplink to Core Switch 2 - Port 2
+  switchport mode trunk
+  channel-group 11 mode active
+  no shutdown
+
+!===============================================================================
+! SERVER CONNECTIONS VPC (Redundant)
+!===============================================================================
+interface port-channel 20
+  description Server Farm Direct Connection (vPC 20)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 10-15
+  vpc 20
+  mtu 9216
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface Ethernet3/1
+  description Server Connection 1
+  switchport mode trunk
+  channel-group 20 mode active
+  no shutdown
+
+interface Ethernet3/2
+  description Server Connection 2
+  switchport mode trunk
+  channel-group 20 mode active
+  no shutdown
+
+!===============================================================================
+! DATABASE CONNECTIONS VPC (Redundant)
+!===============================================================================
+interface port-channel 21
+  description Database Cluster Connection (vPC 21)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 20-22
+  vpc 21
+  mtu 9216
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface Ethernet3/3
+  description Database Connection 1
+  switchport mode trunk
+  channel-group 21 mode active
+  no shutdown
+
+interface Ethernet3/4
+  description Database Connection 2
+  switchport mode trunk
+  channel-group 21 mode active
+  no shutdown
+
+!===============================================================================
+! OSPF CONFIGURATION - NEXUS-SWITCH-01
+!===============================================================================
+router ospf 1
+  router-id 10.1.1.1
+  log-adjacency-changes detail
+  passive-interface default
+  no passive-interface Vlan20
+  no passive-interface Vlan21
+  no passive-interface Vlan160
+  no passive-interface Vlan161
+
+! OSPF Interface Configuration
+interface Vlan20
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf priority 200
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan21
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan160
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan161
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+!===============================================================================
+! BGP CONFIGURATION - NEXUS-SWITCH-01
+!===============================================================================
+router bgp 65001
+  router-id 10.1.1.1
+  log-neighbor-changes
+  bestpath as-path multipath-relax
+  bestpath cost-community ignore
+  graceful-restart
+  graceful-restart restart-time 120
+  graceful-restart stalepath-time 360
+  
+  ! BGP Neighbor Configuration
+  neighbor 10.160.1.2
+    remote-as 65002
+    description BGP_ISP_Link
+    password BGP_Pass_123
+    timers 3 9
+    timers connect 10
+  
+  ! Address Family
+  address-family ipv4 unicast
+    neighbor 10.160.1.2 activate
+    neighbor 10.160.1.2 soft-reconfiguration inbound
+    neighbor 10.160.1.2 route-map EXPORT-ROUTES out
+    neighbor 10.160.1.2 route-map IMPORT-ROUTES in
+    network 10.0.0.0 mask 255.0.0.0
+    network 10.10.0.0 mask 255.255.255.0
+    network 10.20.0.0 mask 255.255.255.0
+    maximum-paths 4
+
+!===============================================================================
+! EIGRP CONFIGURATION - NEXUS-SWITCH-01
+!===============================================================================
+router eigrp 1
+  router-id 10.1.1.1
+  log-neighbor-changes
+
+address-family ipv4 unicast autonomous-system 1
+  router-id 10.1.1.1
+  topology base
+    offset-list 0 in 10 Vlan100
+  exit-topology
+
+  af-interface Vlan10
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  af-interface Vlan20
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  af-interface Vlan100
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  network 10.0.0.0 0.255.255.255
+
+exit-address-family
+
+!===============================================================================
+! RIP CONFIGURATION - NEXUS-SWITCH-01
+!===============================================================================
+router rip
+  router-id 10.1.1.1
+  log-neighbor-changes
+
+address-family ipv4 unicast
+  network 10.0.0.0 0.255.255.255
+  default-information originate
+  timers basic 30 180 180 240
+  passive-interface default
+  no passive-interface Vlan150
+  no passive-interface Vlan151
+
+exit-address-family
+
+!===============================================================================
+! MULTICAST & PIM - NEXUS-SWITCH-01
+!===============================================================================
+ip multicast-routing
+ip pim rp-address 10.1.1.1 224.0.0.0 224.255.255.255
+
+interface Vlan70
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+interface Vlan71
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+interface Vlan130
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+!===============================================================================
+! STATIC ROUTES - NEXUS-SWITCH-01
+!===============================================================================
+ip route 10.0.0.0 255.0.0.0 10.160.0.2 10
+ip route 10.0.0.0 255.0.0.0 10.160.1.2 20
+ip route 192.168.0.0 255.255.0.0 10.160.0.2 50
+
+!===============================================================================
+! ACCESS CONTROL LISTS (Sample - Extend as needed)
+!===============================================================================
+ip access-list extended VLAN1-ACL
+  permit ip 10.1.0.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN10-ACL
+  permit ip 10.10.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.0.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN20-ACL
+  permit ip 10.20.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.20.0.0 0.0.0.255 10.50.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN30-ACL
+  permit ip 10.30.0.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN40-ACL
+  permit ip any any
+
+ip access-list extended VLAN50-ACL
+  permit ip 10.50.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.50.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN60-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN70-ACL
+  permit ip 10.70.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit udp any any range 1024 65535
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN80-ACL
+  permit ip 10.80.0.0 0.0.0.255 any
+  deny ip 10.80.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+
+ip access-list extended VLAN100-ACL
+  permit ip 10.100.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.100.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN110-ACL
+  permit ip 10.110.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN150-ACL
+  permit ip 10.150.0.0 0.0.0.255 any
+
+ip access-list extended VLAN160-ACL
+  permit ip 10.160.0.0 0.0.0.255 any
+  permit icmp any any
+
+! Extend remaining ACLs following same pattern...
+
+ip access-list extended VLAN11-ACL
+  permit ip 10.10.1.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN12-ACL
+  permit ip 10.10.2.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN13-ACL
+  permit ip 10.10.3.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN14-ACL
+  permit ip 10.10.4.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN15-ACL
+  permit ip 10.10.5.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN21-ACL
+  permit ip 10.20.1.0 0.0.0.255 10.20.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN22-ACL
+  permit ip 10.20.2.0 0.0.0.255 10.20.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN31-ACL
+  permit ip 10.30.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN32-ACL
+  permit ip 10.30.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN41-ACL
+  permit ip 10.40.1.0 0.0.0.255 10.1.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN42-ACL
+  permit ip 10.40.2.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN51-ACL
+  permit ip 10.50.1.0 0.0.0.255 10.50.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN52-ACL
+  permit ip 10.50.2.0 0.0.0.255 10.50.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN61-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN62-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN71-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 8554
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN81-ACL
+  permit ip 10.80.1.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN90-ACL
+  permit ip 10.90.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN91-ACL
+  permit ip 10.90.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN92-ACL
+  permit ip 10.90.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN101-ACL
+  permit ip 10.100.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN102-ACL
+  permit ip 10.100.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN103-ACL
+  permit ip 10.100.3.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN104-ACL
+  permit ip 10.100.4.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN105-ACL
+  permit ip 10.100.5.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN111-ACL
+  permit ip 10.110.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN112-ACL
+  permit ip 10.110.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN120-ACL
+  permit ip 10.120.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN121-ACL
+  permit ip 10.120.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN130-ACL
+  permit ip 10.130.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.130.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN131-ACL
+  permit ip 10.130.1.0 0.0.0.255 10.80.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN140-ACL
+  permit ip 10.140.0.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN141-ACL
+  permit ip 10.140.1.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN151-ACL
+  permit ip 10.150.1.0 0.0.0.255 any
+  permit udp any any eq 161
+  permit udp any any eq 162
+
+ip access-list extended VLAN161-ACL
+  permit ip 10.160.1.0 0.0.0.255 any
+  permit icmp any any
+
+ip access-list extended VLAN162-ACL
+  permit ip 10.160.2.0 0.0.0.255 any
+  permit icmp any any
+
+ip access-list extended VLAN170-ACL
+  permit ip any any
+
+ip access-list extended VLAN171-ACL
+  permit ip any any
+
+ip access-list extended VLAN172-ACL
+  permit ip any any
+
+!===============================================================================
+! ROUTE MAPS
+!===============================================================================
+route-map EXPORT-ROUTES permit 10
+  match ip address 101
+  set as-path prepend 65001
+
+route-map EXPORT-ROUTES permit 20
+  set local-preference 100
+
+route-map IMPORT-ROUTES permit 10
+  match ip address 102
+  set as-path prepend 65001
+
+route-map IMPORT-ROUTES permit 20
+
+route-map LOCAL-PREFERENCE permit 10
+  set local-preference 300
+
+!===============================================================================
+! QUALITY OF SERVICE (QoS)
+!===============================================================================
+policy-map CORE-POLICY
+  class VOICE
+    priority percent 20
+    police 10000000 2000000 conform-action transmit exceed-action drop
+  class VIDEO
+    bandwidth percent 30
+    queue-limit 512 packets
+  class CRITICAL-DATA
+    bandwidth percent 25
+    queue-limit 256 packets
+  class BULK-DATA
+    bandwidth percent 15
+    queue-limit 128 packets
+  class BEST-EFFORT
+    bandwidth percent 10
+    queue-limit 64 packets
+
+!===============================================================================
+! SNMP CONFIGURATION
+!===============================================================================
+snmp-server community public ro SNMP_RO_ACL
+snmp-server community private rw SNMP_RW_ACL
+snmp-server contact Network-Admin@company.local
+snmp-server location Nexus-DataCenter-Primary
+snmp-server chassis-id NEXUS-01
+
+snmp-server trap authentication
+snmp-server trap link-status
+snmp-server trap syslog
+snmp-server enable traps snmp authentication
+snmp-server enable traps snmp linkdown linkup coldstart warmstart
+snmp-server host 10.150.1.10 version 2c private
+snmp-server host 10.150.1.11 version 2c private
+
+!===============================================================================
+! NETFLOW CONFIGURATION
+!===============================================================================
+flow exporter NETFLOW-EXPORT
+  destination 10.150.1.15
+  source Vlan1
+  transport udp 2055
+  template data timeout 600
+
+flow monitor NETFLOW-MONITOR
+  record netflow ipv4 original-input
+  exporter NETFLOW-EXPORT
+  timeout inactive 30
+  timeout active 300
+
+!===============================================================================
+! SYSLOG CONFIGURATION
+!===============================================================================
+logging host 10.150.1.20
+logging host 10.150.1.21
+logging trap informational
+logging facility local7
+logging source-interface Vlan150
+
+!===============================================================================
+! NTP CONFIGURATION
+!===============================================================================
+ntp server 10.150.1.5 prefer
+ntp server 10.150.1.6
+ntp server 8.8.8.8
+ntp source Vlan1
+ntp authentication-key 1 md5 NTP_Key_2026
+ntp trusted-key 1
+
+!===============================================================================
+! DNS CONFIGURATION
+!===============================================================================
+ip name-server 10.150.1.30
+ip name-server 10.150.1.31
+ip name-server 8.8.8.8
+
+!===============================================================================
+! DHCP CONFIGURATION
+!===============================================================================
+ip dhcp excluded-address 10.10.0.1 10.10.0.50
+ip dhcp excluded-address 10.20.0.1 10.20.0.50
+ip dhcp excluded-address 10.100.0.1 10.100.0.50
+
+ip dhcp pool SERVERS-10
+  network 10.10.0.0 255.255.255.0
+  default-router 10.10.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DATABASE-20
+  network 10.20.0.0 255.255.255.0
+  default-router 10.20.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DEPARTMENTS-100
+  network 10.100.0.0 255.255.255.0
+  default-router 10.100.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 24
+
+!===============================================================================
+! AAA CONFIGURATION
+!===============================================================================
+aaa new-model
+aaa authentication login default group tacacs+ local
+aaa authorization exec default group tacacs+ local
+aaa authorization commands 15 default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+
+tacacs-server host 10.150.1.40
+tacacs-server host 10.150.1.41
+tacacs-server key TACACS_Key_2026
+tacacs-server timeout 10
+
+username admin privilege 15 secret admin_pass_123
+username operator privilege 1 secret operator_pass_123
+
+!===============================================================================
+! LINE CONFIGURATION
+!===============================================================================
+line console 0
+  exec-timeout 15 0
+  password console_pass_123
+  logging synchronous
+
+line vty 0 4
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh
+
+line vty 5 15
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh
+
+!===============================================================================
+! SPANNING TREE CONFIGURATION
+!===============================================================================
+spanning-tree vlan 1 priority 4096
+spanning-tree vlan 10-15 priority 4096
+spanning-tree vlan 20-22 priority 8192
+spanning-tree guard root
+
+!===============================================================================
+! END OF NEXUS-SWITCH-01 CONFIGURATION
+!===============================================================================
+copy run start
+
+
+!###############################################################################
+!###############################################################################
+! NEXUS SWITCH 2 (SECONDARY) - CONFIGURATION
+! Hostname: NEXUS-SWITCH-02
+! Role: vPC Secondary (Peer Link Secondary)
+!###############################################################################
+!###############################################################################
+
+!===============================================================================
+! BASIC CONFIGURATION & SYSTEM SETTINGS
+!===============================================================================
+hostname NEXUS-SWITCH-02
+
+no ip domain-lookup
+ip domain-name company.local
+service timestamps log datetime msec
+service timestamps debug datetime msec
+logging level local7 notifications
+
+cli alias name wr copy run start
+
+!===============================================================================
+! FEATURE ENABLEMENT (SAME AS PRIMARY)
+!===============================================================================
+feature ssh
+feature telnet
+feature ntp
+feature snmp
+feature syslog
+feature udld
+feature lacp
+feature lldp
+feature interface-vlan
+feature vlan
+feature vpc
+feature ospf
+feature bgp
+feature eigrp
+feature rip
+feature pim
+feature hsrp
+feature hsrp-v2
+feature fex
+feature mpls
+feature mpls-ldp
+feature qos
+feature netflow
+feature span
+feature copp
+
+!===============================================================================
+! SWITCH ROLE & MODE CONFIGURATION
+!===============================================================================
+system jumbomtu 9216
+spanning-tree mode rapid-pvst
+spanning-tree pathcost method long
+spanning-tree port type edge bpduguard default
+spanning-tree port type edge bpdufilter default
+spanning-tree vlan 1 priority 8192
+
+!===============================================================================
+! VPC CONFIGURATION - NEXUS SWITCH 2 (SECONDARY)
+!===============================================================================
+vpc domain 1
+  peer-switch
+  role priority 2
+  peer-keepalive destination 10.160.10.1 source 10.160.10.2
+  delay restore 150
+  delay restore interface-vlan 60
+  auto-recovery
+
+! Create vPC Peer Link Interface (Port Channel 1)
+interface port-channel 1
+  description vPC Peer Link to NEXUS-SWITCH-01
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  spanning-tree port type network
+  vpc peer-link
+  speed 40000
+  duplex full
+  mtu 9216
+  no shutdown
+
+! Physical Interfaces for vPC Peer Link
+interface Ethernet1/1
+  description vPC Peer Link - Nexus-01 Port 1
+  switchport mode trunk
+  channel-group 1 mode active
+  no shutdown
+
+interface Ethernet1/2
+  description vPC Peer Link - Nexus-01 Port 2
+  switchport mode trunk
+  channel-group 1 mode active
+  no shutdown
+
+!===============================================================================
+! VLAN DEFINITIONS (IDENTICAL TO PRIMARY)
+!===============================================================================
+vlan 1
+  name Management
+vlan 10
+  name Server_Farm_10
+vlan 11
+  name Server_Farm_11
+vlan 12
+  name Server_Farm_12
+vlan 13
+  name Server_Farm_13
+vlan 14
+  name Server_Farm_14
+vlan 15
+  name Server_Farm_15
+vlan 20
+  name Database_Primary
+vlan 21
+  name Database_Secondary
+vlan 22
+  name Database_Replication
+vlan 30
+  name DMZ_External
+vlan 31
+  name DMZ_Internal
+vlan 32
+  name DMZ_Staging
+vlan 40
+  name Security_IDS_IPS
+vlan 41
+  name Firewall_Management
+vlan 42
+  name Security_Monitoring
+vlan 50
+  name Backup_Storage
+vlan 51
+  name Backup_Replication
+vlan 52
+  name Archive_Storage
+vlan 60
+  name Voice_VoIP_10
+vlan 61
+  name Voice_VoIP_11
+vlan 62
+  name Voice_VoIP_12
+vlan 70
+  name Video_Streaming
+vlan 71
+  name Video_Conferencing
+vlan 80
+  name Guest_Network
+vlan 81
+  name Guest_Secure
+vlan 90
+  name Development_Lab
+vlan 91
+  name Testing_Lab
+vlan 92
+  name Staging_Lab
+vlan 100
+  name Finance_Department
+vlan 101
+  name HR_Department
+vlan 102
+  name Marketing_Department
+vlan 103
+  name Sales_Department
+vlan 104
+  name Engineering_Department
+vlan 105
+  name Operations_Department
+vlan 110
+  name Building_A_Floor1
+vlan 111
+  name Building_A_Floor2
+vlan 112
+  name Building_A_Floor3
+vlan 120
+  name Building_B_Floor1
+vlan 121
+  name Building_B_Floor2
+vlan 130
+  name Wireless_SSID_Corp
+vlan 131
+  name Wireless_SSID_Guest
+vlan 140
+  name IoT_Sensors
+vlan 141
+  name IoT_Devices
+vlan 150
+  name Management_OOB
+vlan 151
+  name Monitoring_SNMP
+vlan 160
+  name WAN_Link_1
+vlan 161
+  name WAN_Link_2
+vlan 162
+  name WAN_Link_3
+vlan 170
+  name Reserved_Future_1
+vlan 171
+  name Reserved_Future_2
+vlan 172
+  name Reserved_Future_3
+
+!===============================================================================
+! VLAN SVI CONFIGURATION - NEXUS-SWITCH-02 (Secondary IPs)
+!===============================================================================
+interface Vlan1
+  description Management Network
+  ip address 10.1.1.2 255.255.255.0
+  ip access-group VLAN1-ACL in
+  no shutdown
+
+interface Vlan10
+  description Server Farm 10
+  ip address 10.10.0.2 255.255.255.0
+  ip access-group VLAN10-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 10
+    priority 110
+    preempt
+    timers 3 10
+    ip 10.10.0.254
+  no shutdown
+
+interface Vlan11
+  description Server Farm 11
+  ip address 10.10.1.2 255.255.255.0
+  ip access-group VLAN11-ACL in
+  no shutdown
+
+interface Vlan12
+  description Server Farm 12
+  ip address 10.10.2.2 255.255.255.0
+  ip access-group VLAN12-ACL in
+  no shutdown
+
+interface Vlan13
+  description Server Farm 13
+  ip address 10.10.3.2 255.255.255.0
+  ip access-group VLAN13-ACL in
+  no shutdown
+
+interface Vlan14
+  description Server Farm 14
+  ip address 10.10.4.2 255.255.255.0
+  ip access-group VLAN14-ACL in
+  no shutdown
+
+interface Vlan15
+  description Server Farm 15
+  ip address 10.10.5.2 255.255.255.0
+  ip access-group VLAN15-ACL in
+  no shutdown
+
+interface Vlan20
+  description Database Primary
+  ip address 10.20.0.2 255.255.255.0
+  ip access-group VLAN20-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 20
+    priority 110
+    preempt
+    timers 3 10
+    ip 10.20.0.254
+  no shutdown
+
+interface Vlan21
+  description Database Secondary
+  ip address 10.20.1.2 255.255.255.0
+  ip access-group VLAN21-ACL in
+  no shutdown
+
+interface Vlan22
+  description Database Replication
+  ip address 10.20.2.2 255.255.255.0
+  ip access-group VLAN22-ACL in
+  no shutdown
+
+interface Vlan30
+  description DMZ External
+  ip address 10.30.0.2 255.255.255.0
+  ip access-group VLAN30-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 30
+    priority 110
+    preempt
+    timers 3 10
+    ip 10.30.0.254
+  no shutdown
+
+interface Vlan31
+  description DMZ Internal
+  ip address 10.30.1.2 255.255.255.0
+  ip access-group VLAN31-ACL in
+  no shutdown
+
+interface Vlan32
+  description DMZ Staging
+  ip address 10.30.2.2 255.255.255.0
+  ip access-group VLAN32-ACL in
+  no shutdown
+
+interface Vlan40
+  description Security IDS IPS
+  ip address 10.40.0.2 255.255.255.0
+  ip access-group VLAN40-ACL in
+  no shutdown
+
+interface Vlan41
+  description Firewall Management
+  ip address 10.40.1.2 255.255.255.0
+  ip access-group VLAN41-ACL in
+  no shutdown
+
+interface Vlan42
+  description Security Monitoring
+  ip address 10.40.2.2 255.255.255.0
+  ip access-group VLAN42-ACL in
+  no shutdown
+
+interface Vlan50
+  description Backup Storage
+  ip address 10.50.0.2 255.255.255.0
+  ip access-group VLAN50-ACL in
+  no shutdown
+
+interface Vlan51
+  description Backup Replication
+  ip address 10.50.1.2 255.255.255.0
+  ip access-group VLAN51-ACL in
+  no shutdown
+
+interface Vlan52
+  description Archive Storage
+  ip address 10.50.2.2 255.255.255.0
+  ip access-group VLAN52-ACL in
+  no shutdown
+
+interface Vlan60
+  description Voice VoIP 10
+  ip address 10.60.0.2 255.255.255.0
+  ip access-group VLAN60-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 60
+    priority 110
+    preempt
+    timers 3 10
+    ip 10.60.0.254
+  no shutdown
+
+interface Vlan61
+  description Voice VoIP 11
+  ip address 10.60.1.2 255.255.255.0
+  ip access-group VLAN61-ACL in
+  no shutdown
+
+interface Vlan62
+  description Voice VoIP 12
+  ip address 10.60.2.2 255.255.255.0
+  ip access-group VLAN62-ACL in
+  no shutdown
+
+interface Vlan70
+  description Video Streaming
+  ip address 10.70.0.2 255.255.255.0
+  ip access-group VLAN70-ACL in
+  no shutdown
+
+interface Vlan71
+  description Video Conferencing
+  ip address 10.70.1.2 255.255.255.0
+  ip access-group VLAN71-ACL in
+  no shutdown
+
+interface Vlan80
+  description Guest Network
+  ip address 10.80.0.2 255.255.255.0
+  ip access-group VLAN80-ACL in
+  no shutdown
+
+interface Vlan81
+  description Guest Secure
+  ip address 10.80.1.2 255.255.255.0
+  ip access-group VLAN81-ACL in
+  no shutdown
+
+interface Vlan90
+  description Development Lab
+  ip address 10.90.0.2 255.255.255.0
+  ip access-group VLAN90-ACL in
+  no shutdown
+
+interface Vlan91
+  description Testing Lab
+  ip address 10.90.1.2 255.255.255.0
+  ip access-group VLAN91-ACL in
+  no shutdown
+
+interface Vlan92
+  description Staging Lab
+  ip address 10.90.2.2 255.255.255.0
+  ip access-group VLAN92-ACL in
+  no shutdown
+
+interface Vlan100
+  description Finance Department
+  ip address 10.100.0.2 255.255.255.0
+  ip access-group VLAN100-ACL in
+  no hsrp
+  hsrp version 2
+  hsrp 100
+    priority 110
+    preempt
+    timers 3 10
+    ip 10.100.0.254
+  no shutdown
+
+interface Vlan101
+  description HR Department
+  ip address 10.100.1.2 255.255.255.0
+  ip access-group VLAN101-ACL in
+  no shutdown
+
+interface Vlan102
+  description Marketing Department
+  ip address 10.100.2.2 255.255.255.0
+  ip access-group VLAN102-ACL in
+  no shutdown
+
+interface Vlan103
+  description Sales Department
+  ip address 10.100.3.2 255.255.255.0
+  ip access-group VLAN103-ACL in
+  no shutdown
+
+interface Vlan104
+  description Engineering Department
+  ip address 10.100.4.2 255.255.255.0
+  ip access-group VLAN104-ACL in
+  no shutdown
+
+interface Vlan105
+  description Operations Department
+  ip address 10.100.5.2 255.255.255.0
+  ip access-group VLAN105-ACL in
+  no shutdown
+
+interface Vlan110
+  description Building A Floor 1
+  ip address 10.110.0.2 255.255.255.0
+  ip access-group VLAN110-ACL in
+  no shutdown
+
+interface Vlan111
+  description Building A Floor 2
+  ip address 10.110.1.2 255.255.255.0
+  ip access-group VLAN111-ACL in
+  no shutdown
+
+interface Vlan112
+  description Building A Floor 3
+  ip address 10.110.2.2 255.255.255.0
+  ip access-group VLAN112-ACL in
+  no shutdown
+
+interface Vlan120
+  description Building B Floor 1
+  ip address 10.120.0.2 255.255.255.0
+  ip access-group VLAN120-ACL in
+  no shutdown
+
+interface Vlan121
+  description Building B Floor 2
+  ip address 10.120.1.2 255.255.255.0
+  ip access-group VLAN121-ACL in
+  no shutdown
+
+interface Vlan130
+  description Wireless SSID Corp
+  ip address 10.130.0.2 255.255.255.0
+  ip access-group VLAN130-ACL in
+  no shutdown
+
+interface Vlan131
+  description Wireless SSID Guest
+  ip address 10.130.1.2 255.255.255.0
+  ip access-group VLAN131-ACL in
+  no shutdown
+
+interface Vlan140
+  description IoT Sensors
+  ip address 10.140.0.2 255.255.255.0
+  ip access-group VLAN140-ACL in
+  no shutdown
+
+interface Vlan141
+  description IoT Devices
+  ip address 10.140.1.2 255.255.255.0
+  ip access-group VLAN141-ACL in
+  no shutdown
+
+interface Vlan150
+  description Management OOB
+  ip address 10.150.0.2 255.255.255.0
+  ip access-group VLAN150-ACL in
+  no shutdown
+
+interface Vlan151
+  description Monitoring SNMP
+  ip address 10.150.1.2 255.255.255.0
+  ip access-group VLAN151-ACL in
+  no shutdown
+
+interface Vlan160
+  description WAN Link 1 (MPLS)
+  ip address 10.160.0.2 255.255.255.0
+  ip access-group VLAN160-ACL in
+  no shutdown
+
+interface Vlan161
+  description WAN Link 2 (BGP)
+  ip address 10.160.1.2 255.255.255.0
+  ip access-group VLAN161-ACL in
+  no shutdown
+
+interface Vlan162
+  description WAN Link 3 (Backup)
+  ip address 10.160.2.2 255.255.255.0
+  ip access-group VLAN162-ACL in
+  no shutdown
+
+interface Vlan170
+  description Reserved Future 1
+  ip address 10.170.0.2 255.255.255.0
+  ip access-group VLAN170-ACL in
+  no shutdown
+
+interface Vlan171
+  description Reserved Future 2
+  ip address 10.170.1.2 255.255.255.0
+  ip access-group VLAN171-ACL in
+  no shutdown
+
+interface Vlan172
+  description Reserved Future 3
+  ip address 10.170.2.2 255.255.255.0
+  ip access-group VLAN172-ACL in
+  no shutdown
+
+!===============================================================================
+! UPLINK PORT CHANNELS FOR NEXUS-SWITCH-02
+!===============================================================================
+interface port-channel 10
+  description Uplink to Core Switch 1 (vPC 10)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  vpc 10
+  mtu 9216
+  speed 40000
+  duplex full
+  no shutdown
+
+interface Ethernet2/1
+  description Uplink to Core Switch 1 - Port 1
+  switchport mode trunk
+  channel-group 10 mode active
+  no shutdown
+
+interface Ethernet2/2
+  description Uplink to Core Switch 1 - Port 2
+  switchport mode trunk
+  channel-group 10 mode active
+  no shutdown
+
+interface port-channel 11
+  description Uplink to Core Switch 2 (vPC 11)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  vpc 11
+  mtu 9216
+  speed 40000
+  duplex full
+  no shutdown
+
+interface Ethernet2/3
+  description Uplink to Core Switch 2 - Port 1
+  switchport mode trunk
+  channel-group 11 mode active
+  no shutdown
+
+interface Ethernet2/4
+  description Uplink to Core Switch 2 - Port 2
+  switchport mode trunk
+  channel-group 11 mode active
+  no shutdown
+
+!===============================================================================
+! SERVER CONNECTIONS VPC (Redundant)
+!===============================================================================
+interface port-channel 20
+  description Server Farm Direct Connection (vPC 20)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 10-15
+  vpc 20
+  mtu 9216
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface Ethernet3/1
+  description Server Connection 1
+  switchport mode trunk
+  channel-group 20 mode active
+  no shutdown
+
+interface Ethernet3/2
+  description Server Connection 2
+  switchport mode trunk
+  channel-group 20 mode active
+  no shutdown
+
+!===============================================================================
+! DATABASE CONNECTIONS VPC (Redundant)
+!===============================================================================
+interface port-channel 21
+  description Database Cluster Connection (vPC 21)
+  switchport mode trunk
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 20-22
+  vpc 21
+  mtu 9216
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface Ethernet3/3
+  description Database Connection 1
+  switchport mode trunk
+  channel-group 21 mode active
+  no shutdown
+
+interface Ethernet3/4
+  description Database Connection 2
+  switchport mode trunk
+  channel-group 21 mode active
+  no shutdown
+
+!===============================================================================
+! OSPF CONFIGURATION - NEXUS-SWITCH-02
+!===============================================================================
+router ospf 1
+  router-id 10.1.1.2
+  log-adjacency-changes detail
+  passive-interface default
+  no passive-interface Vlan20
+  no passive-interface Vlan21
+  no passive-interface Vlan160
+  no passive-interface Vlan161
+
+interface Vlan20
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf priority 200
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan21
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan160
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+interface Vlan161
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+  ip router ospf 1 area 0
+
+!===============================================================================
+! BGP CONFIGURATION - NEXUS-SWITCH-02
+!===============================================================================
+router bgp 65001
+  router-id 10.1.1.2
+  log-neighbor-changes
+  bestpath as-path multipath-relax
+  graceful-restart
+  graceful-restart restart-time 120
+  graceful-restart stalepath-time 360
+  
+  neighbor 10.160.1.2
+    remote-as 65002
+    description BGP_ISP_Link
+    password BGP_Pass_123
+    timers 3 9
+    timers connect 10
+  
+  address-family ipv4 unicast
+    neighbor 10.160.1.2 activate
+    neighbor 10.160.1.2 soft-reconfiguration inbound
+    neighbor 10.160.1.2 route-map EXPORT-ROUTES out
+    neighbor 10.160.1.2 route-map IMPORT-ROUTES in
+    network 10.0.0.0 mask 255.0.0.0
+    network 10.10.0.0 mask 255.255.255.0
+    network 10.20.0.0 mask 255.255.255.0
+    maximum-paths 4
+
+!===============================================================================
+! EIGRP CONFIGURATION - NEXUS-SWITCH-02
+!===============================================================================
+router eigrp 1
+  router-id 10.1.1.2
+  log-neighbor-changes
+
+address-family ipv4 unicast autonomous-system 1
+  router-id 10.1.1.2
+  topology base
+    offset-list 0 in 10 Vlan100
+  exit-topology
+
+  af-interface Vlan10
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  af-interface Vlan20
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  af-interface Vlan100
+    no passive-interface
+    hello-interval 5
+    hold-time 15
+  exit-af-interface
+
+  network 10.0.0.0 0.255.255.255
+
+exit-address-family
+
+!===============================================================================
+! RIP CONFIGURATION - NEXUS-SWITCH-02
+!===============================================================================
+router rip
+  router-id 10.1.1.2
+  log-neighbor-changes
+
+address-family ipv4 unicast
+  network 10.0.0.0 0.255.255.255
+  default-information originate
+  timers basic 30 180 180 240
+  passive-interface default
+  no passive-interface Vlan150
+  no passive-interface Vlan151
+
+exit-address-family
+
+!===============================================================================
+! MULTICAST & PIM - NEXUS-SWITCH-02
+!===============================================================================
+ip multicast-routing
+ip pim rp-address 10.1.1.2 224.0.0.0 224.255.255.255
+
+interface Vlan70
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+interface Vlan71
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+interface Vlan130
+  ip pim sparse-mode
+  ip multicast-boundary 110
+
+!===============================================================================
+! STATIC ROUTES - NEXUS-SWITCH-02
+!===============================================================================
+ip route 10.0.0.0 255.0.0.0 10.160.0.2 10
+ip route 10.0.0.0 255.0.0.0 10.160.1.2 20
+ip route 192.168.0.0 255.255.0.0 10.160.0.2 50
+
+!===============================================================================
+! ACL CONFIGURATION (SAME AS PRIMARY)
+!===============================================================================
+! [ACL section identical to Primary - copy from NEXUS-SWITCH-01]
+ip access-list extended VLAN1-ACL
+  permit ip 10.1.0.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN10-ACL
+  permit ip 10.10.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.0.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN20-ACL
+  permit ip 10.20.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.20.0.0 0.0.0.255 10.50.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN30-ACL
+  permit ip 10.30.0.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN40-ACL
+  permit ip any any
+
+ip access-list extended VLAN50-ACL
+  permit ip 10.50.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.50.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN60-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN70-ACL
+  permit ip 10.70.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit udp any any range 1024 65535
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN80-ACL
+  permit ip 10.80.0.0 0.0.0.255 any
+  deny ip 10.80.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+
+ip access-list extended VLAN100-ACL
+  permit ip 10.100.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.100.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN110-ACL
+  permit ip 10.110.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN150-ACL
+  permit ip 10.150.0.0 0.0.0.255 any
+
+ip access-list extended VLAN160-ACL
+  permit ip 10.160.0.0 0.0.0.255 any
+  permit icmp any any
+
+ip access-list extended VLAN11-ACL
+  permit ip 10.10.1.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN12-ACL
+  permit ip 10.10.2.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN13-ACL
+  permit ip 10.10.3.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN14-ACL
+  permit ip 10.10.4.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN15-ACL
+  permit ip 10.10.5.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN21-ACL
+  permit ip 10.20.1.0 0.0.0.255 10.20.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN22-ACL
+  permit ip 10.20.2.0 0.0.0.255 10.20.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN31-ACL
+  permit ip 10.30.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN32-ACL
+  permit ip 10.30.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN41-ACL
+  permit ip 10.40.1.0 0.0.0.255 10.1.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN42-ACL
+  permit ip 10.40.2.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN51-ACL
+  permit ip 10.50.1.0 0.0.0.255 10.50.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN52-ACL
+  permit ip 10.50.2.0 0.0.0.255 10.50.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN61-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN62-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN71-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 8554
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN81-ACL
+  permit ip 10.80.1.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN90-ACL
+  permit ip 10.90.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN91-ACL
+  permit ip 10.90.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN92-ACL
+  permit ip 10.90.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN101-ACL
+  permit ip 10.100.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN102-ACL
+  permit ip 10.100.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN103-ACL
+  permit ip 10.100.3.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN104-ACL
+  permit ip 10.100.4.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN105-ACL
+  permit ip 10.100.5.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN111-ACL
+  permit ip 10.110.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN112-ACL
+  permit ip 10.110.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN120-ACL
+  permit ip 10.120.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN121-ACL
+  permit ip 10.120.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN130-ACL
+  permit ip 10.130.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.130.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN131-ACL
+  permit ip 10.130.1.0 0.0.0.255 10.80.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN140-ACL
+  permit ip 10.140.0.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN141-ACL
+  permit ip 10.140.1.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+
+ip access-list extended VLAN151-ACL
+  permit ip 10.150.1.0 0.0.0.255 any
+  permit udp any any eq 161
+  permit udp any any eq 162
+
+ip access-list extended VLAN161-ACL
+  permit ip 10.160.1.0 0.0.0.255 any
+  permit icmp any any
+
+ip access-list extended VLAN162-ACL
+  permit ip 10.160.2.0 0.0.0.255 any
+  permit icmp any any
+
+ip access-list extended VLAN170-ACL
+  permit ip any any
+
+ip access-list extended VLAN171-ACL
+  permit ip any any
+
+ip access-list extended VLAN172-ACL
+  permit ip any any
+
+!===============================================================================
+! ROUTE MAPS (Same as Primary)
+!===============================================================================
+route-map EXPORT-ROUTES permit 10
+  match ip address 101
+  set as-path prepend 65001
+
+route-map EXPORT-ROUTES permit 20
+  set local-preference 100
+
+route-map IMPORT-ROUTES permit 10
+  match ip address 102
+  set as-path prepend 65001
+
+route-map IMPORT-ROUTES permit 20
+
+route-map LOCAL-PREFERENCE permit 10
+  set local-preference 300
+
+!===============================================================================
+! QUALITY OF SERVICE (QoS) - Same as Primary
+!===============================================================================
+policy-map CORE-POLICY
+  class VOICE
+    priority percent 20
+    police 10000000 2000000 conform-action transmit exceed-action drop
+  class VIDEO
+    bandwidth percent 30
+    queue-limit 512 packets
+  class CRITICAL-DATA
+    bandwidth percent 25
+    queue-limit 256 packets
+  class BULK-DATA
+    bandwidth percent 15
+    queue-limit 128 packets
+  class BEST-EFFORT
+    bandwidth percent 10
+    queue-limit 64 packets
+
+!===============================================================================
+! SNMP CONFIGURATION
+!===============================================================================
+snmp-server community public ro SNMP_RO_ACL
+snmp-server community private rw SNMP_RW_ACL
+snmp-server contact Network-Admin@company.local
+snmp-server location Nexus-DataCenter-Secondary
+snmp-server chassis-id NEXUS-02
+
+snmp-server trap authentication
+snmp-server trap link-status
+snmp-server trap syslog
+snmp-server enable traps snmp authentication
+snmp-server enable traps snmp linkdown linkup coldstart warmstart
+snmp-server host 10.150.1.10 version 2c private
+snmp-server host 10.150.1.11 version 2c private
+
+!===============================================================================
+! NETFLOW CONFIGURATION
+!===============================================================================
+flow exporter NETFLOW-EXPORT
+  destination 10.150.1.15
+  source Vlan1
+  transport udp 2055
+  template data timeout 600
+
+flow monitor NETFLOW-MONITOR
+  record netflow ipv4 original-input
+  exporter NETFLOW-EXPORT
+  timeout inactive 30
+  timeout active 300
+
+!===============================================================================
+! SYSLOG CONFIGURATION
+!===============================================================================
+logging host 10.150.1.20
+logging host 10.150.1.21
+logging trap informational
+logging facility local7
+logging source-interface Vlan150
+
+!===============================================================================
+! NTP CONFIGURATION
+!===============================================================================
+ntp server 10.150.1.5 prefer
+ntp server 10.150.1.6
+ntp server 8.8.8.8
+ntp source Vlan1
+ntp authentication-key 1 md5 NTP_Key_2026
+ntp trusted-key 1
+
+!===============================================================================
+! DNS CONFIGURATION
+!===============================================================================
+ip name-server 10.150.1.30
+ip name-server 10.150.1.31
+ip name-server 8.8.8.8
+
+!===============================================================================
+! DHCP CONFIGURATION
+!===============================================================================
+ip dhcp excluded-address 10.10.0.1 10.10.0.50
+ip dhcp excluded-address 10.20.0.1 10.20.0.50
+ip dhcp excluded-address 10.100.0.1 10.100.0.50
+
+ip dhcp pool SERVERS-10
+  network 10.10.0.0 255.255.255.0
+  default-router 10.10.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DATABASE-20
+  network 10.20.0.0 255.255.255.0
+  default-router 10.20.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DEPARTMENTS-100
+  network 10.100.0.0 255.255.255.0
+  default-router 10.100.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 24
+
+!===============================================================================
+! AAA CONFIGURATION
+!===============================================================================
+aaa new-model
+aaa authentication login default group tacacs+ local
+aaa authorization exec default group tacacs+ local
+aaa authorization commands 15 default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+
+tacacs-server host 10.150.1.40
+tacacs-server host 10.150.1.41
+tacacs-server key TACACS_Key_2026
+tacacs-server timeout 10
+
+username admin privilege 15 secret admin_pass_123
+username operator privilege 1 secret operator_pass_123
+
+!===============================================================================
+! LINE CONFIGURATION
+!===============================================================================
+line console 0
+  exec-timeout 15 0
+  password console_pass_123
+  logging synchronous
+
+line vty 0 4
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh
+
+line vty 5 15
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh
+
+!===============================================================================
+! SPANNING TREE CONFIGURATION
+!===============================================================================
+spanning-tree vlan 1 priority 8192
+spanning-tree vlan 10-15 priority 8192
+spanning-tree vlan 20-22 priority 4096
+spanning-tree guard root
+
+!===============================================================================
+! END OF NEXUS-SWITCH-02 CONFIGURATION
+!===============================================================================
+copy run start
+
+================================================================================
+! DUAL NEXUS vPC CONFIGURATION SUMMARY
+================================================================================
+!
+! ARCHITECTURE: Active-Active Redundancy with vPC (Virtual Port Channel)
+!
+! NEXUS-SWITCH-01 (PRIMARY):
+!   - Role Priority: 1 (Primary)
+!   - vPC Peer Link: Port-Channel 1 (Eth1/1-1/2 to NEXUS-SWITCH-02)
+!   - Peer Keepalive: 10.160.10.1 -> 10.160.10.2
+!   - Primary HSRP Gateway for specific VLANs
+!
+! NEXUS-SWITCH-02 (SECONDARY):
+!   - Role Priority: 2 (Secondary)
+!   - vPC Peer Link: Port-Channel 1 (Eth1/1-1/2 to NEXUS-SWITCH-01)
+!   - Peer Keepalive: 10.160.10.2 -> 10.160.10.1
+!   - Secondary HSRP Gateway for specific VLANs
+!
+! PROTOCOLS IMPLEMENTED:
+! ✅ vPC (Virtual Port Channel) - Active-Active Redundancy
+! ✅ HSRP v2 - Gateway Redundancy (20 groups configured)
+! ✅ OSPF - Interior Gateway Protocol
+! ✅ BGP - Exterior Gateway Protocol
+! ✅ EIGRP - Advanced IGP
+! ✅ RIP - Legacy Support
+! ✅ Spanning Tree - Loop Prevention (Rapid PVST)
+! ✅ LACP - Link Aggregation Control Protocol
+! ✅ PIM - Multicast Routing (Sparse Mode)
+! ✅ SNMP - Network Management
+! ✅ Syslog - Log Collection
+! ✅ NetFlow - Traffic Analysis
+! ✅ DHCP - Dynamic IP Assignment
+! ✅ NTP - Time Synchronization
+! ✅ AAA/TACACS+ - Authentication & Authorization
+!
+! VLANs: 50 (VLANs 1, 10-15, 20-22, 30-32, 40-42, 50-52, 60-62, 70-71, 80-81, 90-92, 100-105, 110-112, 120-121, 130-131, 140-141, 150-151, 160-162, 170-172)
+!
+! UPLINK PORT CHANNELS:
+! - PC10: To Core Switch 1 (vPC 10) - 40Gbps
+! - PC11: To Core Switch 2 (vPC 11) - 40Gbps
+!
+! REDUNDANT CONNECTIONS:
+! - PC20: Server Farm (vPC 20) - 10Gbps
+! - PC21: Database Cluster (vPC 21) - 10Gbps
+!
+! FAILURE SCENARIOS HANDLED:
+! 1. Single interface failure -> Traffic continues via redundant port
+! 2. Single switch failure -> Other switch takes over all VLANs
+! 3. Peer link failure -> Split-brain prevention via keepalive
+! 4. Gateway failure -> HSRP provides automatic failover
+!
+! ACCESS: Devices can connect to either switch and get same logical topology
+! BANDWIDTH: Load-balanced across both switches
+! CONVERGENCE: Sub-second failover for seamless operation
+!
+================================================================================
