@@ -1,0 +1,1515 @@
+================================================================================
+CISCO CATALYST 6500 CORE SWITCH - COMPLETE CONFIGURATION
+IP Schema: 10.0.0.0/8 - 10.255.255.0/24
+50 VLANs Configuration with All Protocols (OSPF, BGP, EIGRP, HSRP, STP, etc.)
+================================================================================
+
+!===============================================================================
+! HOSTNAME AND BASIC SETUP
+!===============================================================================
+hostname CORE-SWITCH-01
+no ip domain-lookup
+ip domain-name company.local
+enable password cisco123
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service udp-small-servers
+no service tcp-small-servers
+logging buffered 8192 informational
+
+!===============================================================================
+! IP ROUTING AND PROTOCOL SETUP
+!===============================================================================
+ip routing
+ip cef
+ip classless
+no ip http server
+no ip http secure-server
+ip ssh version 2
+ip ssh authentication-retries 3
+
+!===============================================================================
+! VLAN DEFINITIONS (50 VLANs)
+!===============================================================================
+vlan 1
+  name Management
+vlan 10
+  name Server_Farm_10
+vlan 11
+  name Server_Farm_11
+vlan 12
+  name Server_Farm_12
+vlan 13
+  name Server_Farm_13
+vlan 14
+  name Server_Farm_14
+vlan 15
+  name Server_Farm_15
+vlan 20
+  name Database_Primary
+vlan 21
+  name Database_Secondary
+vlan 22
+  name Database_Replication
+vlan 30
+  name DMZ_External
+vlan 31
+  name DMZ_Internal
+vlan 32
+  name DMZ_Staging
+vlan 40
+  name Security_IDS_IPS
+vlan 41
+  name Firewall_Management
+vlan 42
+  name Security_Monitoring
+vlan 50
+  name Backup_Storage
+vlan 51
+  name Backup_Replication
+vlan 52
+  name Archive_Storage
+vlan 60
+  name Voice_VoIP_10
+vlan 61
+  name Voice_VoIP_11
+vlan 62
+  name Voice_VoIP_12
+vlan 70
+  name Video_Streaming
+vlan 71
+  name Video_Conferencing
+vlan 80
+  name Guest_Network
+vlan 81
+  name Guest_Secure
+vlan 90
+  name Development_Lab
+vlan 91
+  name Testing_Lab
+vlan 92
+  name Staging_Lab
+vlan 100
+  name Finance_Department
+vlan 101
+  name HR_Department
+vlan 102
+  name Marketing_Department
+vlan 103
+  name Sales_Department
+vlan 104
+  name Engineering_Department
+vlan 105
+  name Operations_Department
+vlan 110
+  name Building_A_Floor1
+vlan 111
+  name Building_A_Floor2
+vlan 112
+  name Building_A_Floor3
+vlan 120
+  name Building_B_Floor1
+vlan 121
+  name Building_B_Floor2
+vlan 130
+  name Wireless_SSID_Corp
+vlan 131
+  name Wireless_SSID_Guest
+vlan 140
+  name IoT_Sensors
+vlan 141
+  name IoT_Devices
+vlan 150
+  name Management_OOB
+vlan 151
+  name Monitoring_SNMP
+vlan 160
+  name WAN_Link_1
+vlan 161
+  name WAN_Link_2
+vlan 162
+  name WAN_Link_3
+vlan 170
+  name Reserved_Future_1
+vlan 171
+  name Reserved_Future_2
+vlan 172
+  name Reserved_Future_3
+
+!===============================================================================
+! IP SCHEMA DESIGN (50 VLANs with /24 subnets)
+!===============================================================================
+! VLAN 1 - Management
+interface Vlan1
+  description Management Network
+  ip address 10.1.1.1 255.255.255.0
+  no shutdown
+
+! VLAN 10-15 - Server Farm (10.10.x.0/24)
+interface Vlan10
+  description Server Farm 10
+  ip address 10.10.0.1 255.255.255.0
+  ip access-group VLAN10-ACL in
+  no shutdown
+
+interface Vlan11
+  description Server Farm 11
+  ip address 10.10.1.1 255.255.255.0
+  ip access-group VLAN11-ACL in
+  no shutdown
+
+interface Vlan12
+  description Server Farm 12
+  ip address 10.10.2.1 255.255.255.0
+  ip access-group VLAN12-ACL in
+  no shutdown
+
+interface Vlan13
+  description Server Farm 13
+  ip address 10.10.3.1 255.255.255.0
+  ip access-group VLAN13-ACL in
+  no shutdown
+
+interface Vlan14
+  description Server Farm 14
+  ip address 10.10.4.1 255.255.255.0
+  ip access-group VLAN14-ACL in
+  no shutdown
+
+interface Vlan15
+  description Server Farm 15
+  ip address 10.10.5.1 255.255.255.0
+  ip access-group VLAN15-ACL in
+  no shutdown
+
+! VLAN 20-22 - Database (10.20.x.0/24)
+interface Vlan20
+  description Database Primary
+  ip address 10.20.0.1 255.255.255.0
+  ip access-group VLAN20-ACL in
+  no shutdown
+
+interface Vlan21
+  description Database Secondary
+  ip address 10.20.1.1 255.255.255.0
+  ip access-group VLAN21-ACL in
+  no shutdown
+
+interface Vlan22
+  description Database Replication
+  ip address 10.20.2.1 255.255.255.0
+  ip access-group VLAN22-ACL in
+  no shutdown
+
+! VLAN 30-32 - DMZ (10.30.x.0/24)
+interface Vlan30
+  description DMZ External
+  ip address 10.30.0.1 255.255.255.0
+  ip access-group VLAN30-ACL in
+  no shutdown
+
+interface Vlan31
+  description DMZ Internal
+  ip address 10.30.1.1 255.255.255.0
+  ip access-group VLAN31-ACL in
+  no shutdown
+
+interface Vlan32
+  description DMZ Staging
+  ip address 10.30.2.1 255.255.255.0
+  ip access-group VLAN32-ACL in
+  no shutdown
+
+! VLAN 40-42 - Security (10.40.x.0/24)
+interface Vlan40
+  description Security IDS IPS
+  ip address 10.40.0.1 255.255.255.0
+  ip access-group VLAN40-ACL in
+  no shutdown
+
+interface Vlan41
+  description Firewall Management
+  ip address 10.40.1.1 255.255.255.0
+  ip access-group VLAN41-ACL in
+  no shutdown
+
+interface Vlan42
+  description Security Monitoring
+  ip address 10.40.2.1 255.255.255.0
+  ip access-group VLAN42-ACL in
+  no shutdown
+
+! VLAN 50-52 - Backup Storage (10.50.x.0/24)
+interface Vlan50
+  description Backup Storage
+  ip address 10.50.0.1 255.255.255.0
+  ip access-group VLAN50-ACL in
+  no shutdown
+
+interface Vlan51
+  description Backup Replication
+  ip address 10.50.1.1 255.255.255.0
+  ip access-group VLAN51-ACL in
+  no shutdown
+
+interface Vlan52
+  description Archive Storage
+  ip address 10.50.2.1 255.255.255.0
+  ip access-group VLAN52-ACL in
+  no shutdown
+
+! VLAN 60-62 - Voice VoIP (10.60.x.0/24)
+interface Vlan60
+  description Voice VoIP 10
+  ip address 10.60.0.1 255.255.255.0
+  ip access-group VLAN60-ACL in
+  no shutdown
+
+interface Vlan61
+  description Voice VoIP 11
+  ip address 10.60.1.1 255.255.255.0
+  ip access-group VLAN61-ACL in
+  no shutdown
+
+interface Vlan62
+  description Voice VoIP 12
+  ip address 10.60.2.1 255.255.255.0
+  ip access-group VLAN62-ACL in
+  no shutdown
+
+! VLAN 70-71 - Video (10.70.x.0/24)
+interface Vlan70
+  description Video Streaming
+  ip address 10.70.0.1 255.255.255.0
+  ip access-group VLAN70-ACL in
+  no shutdown
+
+interface Vlan71
+  description Video Conferencing
+  ip address 10.70.1.1 255.255.255.0
+  ip access-group VLAN71-ACL in
+  no shutdown
+
+! VLAN 80-81 - Guest Network (10.80.x.0/24)
+interface Vlan80
+  description Guest Network
+  ip address 10.80.0.1 255.255.255.0
+  ip access-group VLAN80-ACL in
+  no shutdown
+
+interface Vlan81
+  description Guest Secure
+  ip address 10.80.1.1 255.255.255.0
+  ip access-group VLAN81-ACL in
+  no shutdown
+
+! VLAN 90-92 - Lab (10.90.x.0/24)
+interface Vlan90
+  description Development Lab
+  ip address 10.90.0.1 255.255.255.0
+  ip access-group VLAN90-ACL in
+  no shutdown
+
+interface Vlan91
+  description Testing Lab
+  ip address 10.90.1.1 255.255.255.0
+  ip access-group VLAN91-ACL in
+  no shutdown
+
+interface Vlan92
+  description Staging Lab
+  ip address 10.90.2.1 255.255.255.0
+  ip access-group VLAN92-ACL in
+  no shutdown
+
+! VLAN 100-105 - Departments (10.100.x.0/24)
+interface Vlan100
+  description Finance Department
+  ip address 10.100.0.1 255.255.255.0
+  ip access-group VLAN100-ACL in
+  no shutdown
+
+interface Vlan101
+  description HR Department
+  ip address 10.100.1.1 255.255.255.0
+  ip access-group VLAN101-ACL in
+  no shutdown
+
+interface Vlan102
+  description Marketing Department
+  ip address 10.100.2.1 255.255.255.0
+  ip access-group VLAN102-ACL in
+  no shutdown
+
+interface Vlan103
+  description Sales Department
+  ip address 10.100.3.1 255.255.255.0
+  ip access-group VLAN103-ACL in
+  no shutdown
+
+interface Vlan104
+  description Engineering Department
+  ip address 10.100.4.1 255.255.255.0
+  ip access-group VLAN104-ACL in
+  no shutdown
+
+interface Vlan105
+  description Operations Department
+  ip address 10.100.5.1 255.255.255.0
+  ip access-group VLAN105-ACL in
+  no shutdown
+
+! VLAN 110-112 - Building A (10.110.x.0/24)
+interface Vlan110
+  description Building A Floor 1
+  ip address 10.110.0.1 255.255.255.0
+  ip access-group VLAN110-ACL in
+  no shutdown
+
+interface Vlan111
+  description Building A Floor 2
+  ip address 10.110.1.1 255.255.255.0
+  ip access-group VLAN111-ACL in
+  no shutdown
+
+interface Vlan112
+  description Building A Floor 3
+  ip address 10.110.2.1 255.255.255.0
+  ip access-group VLAN112-ACL in
+  no shutdown
+
+! VLAN 120-121 - Building B (10.120.x.0/24)
+interface Vlan120
+  description Building B Floor 1
+  ip address 10.120.0.1 255.255.255.0
+  ip access-group VLAN120-ACL in
+  no shutdown
+
+interface Vlan121
+  description Building B Floor 2
+  ip address 10.120.1.1 255.255.255.0
+  ip access-group VLAN121-ACL in
+  no shutdown
+
+! VLAN 130-131 - Wireless (10.130.x.0/24)
+interface Vlan130
+  description Wireless SSID Corp
+  ip address 10.130.0.1 255.255.255.0
+  ip access-group VLAN130-ACL in
+  no shutdown
+
+interface Vlan131
+  description Wireless SSID Guest
+  ip address 10.130.1.1 255.255.255.0
+  ip access-group VLAN131-ACL in
+  no shutdown
+
+! VLAN 140-141 - IoT (10.140.x.0/24)
+interface Vlan140
+  description IoT Sensors
+  ip address 10.140.0.1 255.255.255.0
+  ip access-group VLAN140-ACL in
+  no shutdown
+
+interface Vlan141
+  description IoT Devices
+  ip address 10.140.1.1 255.255.255.0
+  ip access-group VLAN141-ACL in
+  no shutdown
+
+! VLAN 150-151 - Management (10.150.x.0/24)
+interface Vlan150
+  description Management OOB
+  ip address 10.150.0.1 255.255.255.0
+  ip access-group VLAN150-ACL in
+  no shutdown
+
+interface Vlan151
+  description Monitoring SNMP
+  ip address 10.150.1.1 255.255.255.0
+  ip access-group VLAN151-ACL in
+  no shutdown
+
+! VLAN 160-162 - WAN Links (10.160.x.0/24)
+interface Vlan160
+  description WAN Link 1 (MPLS)
+  ip address 10.160.0.1 255.255.255.0
+  ip access-group VLAN160-ACL in
+  no shutdown
+
+interface Vlan161
+  description WAN Link 2 (BGP)
+  ip address 10.160.1.1 255.255.255.0
+  ip access-group VLAN161-ACL in
+  no shutdown
+
+interface Vlan162
+  description WAN Link 3 (Backup)
+  ip address 10.160.2.1 255.255.255.0
+  ip access-group VLAN162-ACL in
+  no shutdown
+
+! VLAN 170-172 - Reserved (10.170.x.0/24)
+interface Vlan170
+  description Reserved Future 1
+  ip address 10.170.0.1 255.255.255.0
+  ip access-group VLAN170-ACL in
+  no shutdown
+
+interface Vlan171
+  description Reserved Future 2
+  ip address 10.170.1.1 255.255.255.0
+  ip access-group VLAN171-ACL in
+  no shutdown
+
+interface Vlan172
+  description Reserved Future 3
+  ip address 10.170.2.1 255.255.255.0
+  ip access-group VLAN172-ACL in
+  no shutdown
+
+!===============================================================================
+! SPANNING TREE PROTOCOL (STP) CONFIGURATION
+!===============================================================================
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+spanning-tree pathcost method long
+spanning-tree maxage 20
+spanning-tree forwarddelay 15
+
+! Root Bridge for VLANs 1, 10-15, 20-22
+spanning-tree vlan 1,10-15,20-22 priority 0
+
+! Secondary Root for VLANs 30-32, 40-42, 50-52
+spanning-tree vlan 30-32,40-42,50-52 priority 4096
+
+! BPDU Guard on all access ports
+spanning-tree portfast bpduguard default
+
+! STP Root Guard
+spanning-tree guard root
+
+!===============================================================================
+! HSRP CONFIGURATION (Virtual IP Gateway for VLANs)
+!===============================================================================
+! VLAN 10 - HSRP Group 10
+interface Vlan10
+  standby 10 ip 10.10.0.254
+  standby 10 priority 120
+  standby 10 preempt
+  standby 10 timers 3 10
+  standby 10 track 1 decrement 30
+
+! VLAN 20 - HSRP Group 20
+interface Vlan20
+  standby 20 ip 10.20.0.254
+  standby 20 priority 120
+  standby 20 preempt
+  standby 20 timers 3 10
+  standby 20 track 1 decrement 30
+
+! VLAN 30 - HSRP Group 30
+interface Vlan30
+  standby 30 ip 10.30.0.254
+  standby 30 priority 120
+  standby 30 preempt
+  standby 30 timers 3 10
+  standby 30 track 1 decrement 30
+
+! VLAN 100 - HSRP Group 100
+interface Vlan100
+  standby 100 ip 10.100.0.254
+  standby 100 priority 120
+  standby 100 preempt
+  standby 100 timers 3 10
+  standby 100 track 1 decrement 30
+
+!===============================================================================
+! OSPF CONFIGURATION (Interior Gateway Protocol)
+!===============================================================================
+router ospf 1
+  router-id 10.1.1.1
+  log-adjacency-changes detail
+  passive-interface default
+  no passive-interface Vlan20
+  no passive-interface Vlan21
+  no passive-interface Vlan160
+  no passive-interface Vlan161
+  area 0 authentication message-digest
+  network 10.0.0.0 0.255.255.255 area 0
+
+! OSPF Interface Configuration
+interface Vlan20
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf priority 200
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+
+interface Vlan21
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 10
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+
+interface Vlan160
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+
+interface Vlan161
+  ip ospf authentication message-digest
+  ip ospf message-digest-key 1 md5 OSPF_Key_123
+  ip ospf cost 100
+  ip ospf hello-interval 10
+  ip ospf dead-interval 40
+
+!===============================================================================
+! BGP CONFIGURATION (Exterior Gateway Protocol)
+!===============================================================================
+router bgp 65001
+  bgp router-id 10.1.1.1
+  bgp log-neighbor-changes
+  bgp graceful-restart
+  bgp graceful-restart restart-time 120
+  bgp graceful-restart stalepath-time 360
+  
+  ! Neighbor Configuration for WAN Links
+  neighbor 10.160.1.2 remote-as 65002
+  neighbor 10.160.1.2 description BGP_ISP_Link_2
+  neighbor 10.160.1.2 password BGP_Pass_123
+  neighbor 10.160.1.2 timers 3 9
+  neighbor 10.160.1.2 timers connect 10
+  
+  ! Address Family Configuration
+  address-family ipv4
+    neighbor 10.160.1.2 activate
+    neighbor 10.160.1.2 soft-reconfiguration inbound
+    neighbor 10.160.1.2 route-map EXPORT-ROUTES out
+    network 10.0.0.0 mask 255.0.0.0
+    network 10.10.0.0 mask 255.255.255.0
+    network 10.20.0.0 mask 255.255.255.0
+  exit-address-family
+
+!===============================================================================
+! EIGRP CONFIGURATION (Enhanced Interior Gateway Routing Protocol)
+!===============================================================================
+router eigrp 1
+  router-id 10.1.1.1
+  eigrp router-id 10.1.1.1
+  eigrp log-neighbor-changes
+  !
+  address-family ipv4 unicast autonomous-system 1
+    af-interface default
+      passive-interface
+    exit-af-interface
+    !
+    af-interface Vlan10
+      no passive-interface
+      hello-interval 5
+      hold-time 15
+    exit-af-interface
+    !
+    af-interface Vlan20
+      no passive-interface
+      hello-interval 5
+      hold-time 15
+    exit-af-interface
+    !
+    af-interface Vlan100
+      no passive-interface
+      hello-interval 5
+      hold-time 15
+    exit-af-interface
+    !
+    topology base
+      offset-list 0 in 10 Vlan100
+    exit-topology
+    !
+    network 10.0.0.0 0.255.255.255
+  exit-address-family
+
+!===============================================================================
+! RIP CONFIGURATION (Routing Information Protocol - Legacy Support)
+!===============================================================================
+router rip
+  version 2
+  passive-interface default
+  no passive-interface Vlan150
+  no passive-interface Vlan151
+  network 10.0.0.0
+  default-information originate
+  timers basic 30 180 180 240
+
+!===============================================================================
+! MULTICAST ROUTING
+!===============================================================================
+ip multicast-routing
+ip pim rp-address 10.1.1.1 224.0.0.0 224.255.255.255
+
+interface Vlan70
+  ip pim sparse-mode
+  ip multicast-boundary ACL-MULTICAST
+
+interface Vlan71
+  ip pim sparse-mode
+  ip multicast-boundary ACL-MULTICAST
+
+interface Vlan130
+  ip pim sparse-mode
+  ip multicast-boundary ACL-MULTICAST
+
+!===============================================================================
+! STATIC ROUTES
+!===============================================================================
+ip route 10.0.0.0 255.0.0.0 10.160.0.2 10
+ip route 10.0.0.0 255.0.0.0 10.160.1.2 20
+ip route 192.168.0.0 255.255.0.0 10.160.0.2 50
+
+!===============================================================================
+! ACCESS CONTROL LISTS (ACLs)
+!===============================================================================
+! Server Farm ACLs
+ip access-list extended VLAN10-ACL
+  remark Allow Server Farm to Database
+  permit ip 10.10.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  remark Allow to DMZ
+  permit ip 10.10.0.0 0.0.0.255 10.30.0.0 0.0.2.255
+  remark Allow to Management
+  permit ip 10.10.0.0 0.0.0.255 10.1.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN11-ACL
+  remark Allow Server Farm 11
+  permit ip 10.10.1.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.1.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN12-ACL
+  permit ip 10.10.2.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.2.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN13-ACL
+  permit ip 10.10.3.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.3.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN14-ACL
+  permit ip 10.10.4.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.4.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN15-ACL
+  permit ip 10.10.5.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit ip 10.10.5.0 0.0.0.255 10.30.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Database ACLs
+ip access-list extended VLAN20-ACL
+  remark Allow Database from Servers
+  permit ip 10.20.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.20.0.0 0.0.0.255 10.50.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN21-ACL
+  permit ip 10.20.1.0 0.0.0.255 10.20.0.0 0.0.0.255
+  permit ip 10.20.1.0 0.0.0.255 10.20.2.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN22-ACL
+  permit ip 10.20.2.0 0.0.0.255 10.20.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! DMZ ACLs
+ip access-list extended VLAN30-ACL
+  remark DMZ External - Limited Access
+  permit ip 10.30.0.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN31-ACL
+  permit ip 10.30.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.30.1.0 0.0.0.255 10.30.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN32-ACL
+  permit ip 10.30.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Security ACLs
+ip access-list extended VLAN40-ACL
+  remark IDS/IPS - Monitoring all traffic
+  permit ip any any
+exit
+
+ip access-list extended VLAN41-ACL
+  remark Firewall Management
+  permit ip 10.40.1.0 0.0.0.255 10.1.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN42-ACL
+  permit ip 10.40.2.0 0.0.0.255 any
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Backup Storage ACLs
+ip access-list extended VLAN50-ACL
+  permit ip 10.50.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.50.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN51-ACL
+  permit ip 10.50.1.0 0.0.0.255 10.50.0.0 0.0.0.255
+  permit ip 10.50.1.0 0.0.0.255 10.50.2.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN52-ACL
+  permit ip 10.50.2.0 0.0.0.255 10.50.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Voice VoIP ACLs
+ip access-list extended VLAN60-ACL
+  remark Voice VLAN - QoS Priority
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit tcp any any eq 5061
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN61-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN62-ACL
+  permit udp any any range 16384 32767
+  permit tcp any any eq 5060
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Video ACLs
+ip access-list extended VLAN70-ACL
+  remark Video Streaming
+  permit ip 10.70.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit udp any any range 1024 65535
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN71-ACL
+  remark Video Conferencing
+  permit udp any any range 16384 32767
+  permit tcp any any eq 8554
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Guest Network ACLs
+ip access-list extended VLAN80-ACL
+  remark Guest Network - Internet Only
+  permit ip 10.80.0.0 0.0.0.255 any
+  deny ip 10.80.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+  permit icmp any any
+exit
+
+ip access-list extended VLAN81-ACL
+  permit ip 10.80.1.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Lab ACLs
+ip access-list extended VLAN90-ACL
+  remark Development Lab
+  permit ip 10.90.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN91-ACL
+  permit ip 10.90.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN92-ACL
+  permit ip 10.90.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Department ACLs
+ip access-list extended VLAN100-ACL
+  remark Finance Department
+  permit ip 10.100.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.100.0.0 0.0.0.255 10.20.0.0 0.0.2.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN101-ACL
+  permit ip 10.100.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN102-ACL
+  permit ip 10.100.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN103-ACL
+  permit ip 10.100.3.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN104-ACL
+  permit ip 10.100.4.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN105-ACL
+  permit ip 10.100.5.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Building ACLs
+ip access-list extended VLAN110-ACL
+  permit ip 10.110.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN111-ACL
+  permit ip 10.110.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN112-ACL
+  permit ip 10.110.2.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN120-ACL
+  permit ip 10.120.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN121-ACL
+  permit ip 10.120.1.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Wireless ACLs
+ip access-list extended VLAN130-ACL
+  remark Wireless SSID Corp
+  permit ip 10.130.0.0 0.0.0.255 10.10.0.0 0.0.5.255
+  permit ip 10.130.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN131-ACL
+  remark Wireless SSID Guest
+  permit ip 10.130.1.0 0.0.0.255 10.80.0.0 0.0.1.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! IoT ACLs
+ip access-list extended VLAN140-ACL
+  remark IoT Sensors - Limited Access
+  permit ip 10.140.0.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+ip access-list extended VLAN141-ACL
+  permit ip 10.140.1.0 0.0.0.255 10.40.0.0 0.0.0.255
+  permit icmp any any
+  deny ip any any log
+exit
+
+! Management ACLs
+ip access-list extended VLAN150-ACL
+  remark Management OOB
+  permit ip 10.150.0.0 0.0.0.255 any
+exit
+
+ip access-list extended VLAN151-ACL
+  remark Monitoring SNMP
+  permit ip 10.150.1.0 0.0.0.255 any
+  permit udp any any eq 161
+  permit udp any any eq 162
+exit
+
+! WAN ACLs
+ip access-list extended VLAN160-ACL
+  permit ip 10.160.0.0 0.0.0.255 any
+  permit icmp any any
+exit
+
+ip access-list extended VLAN161-ACL
+  permit ip 10.160.1.0 0.0.0.255 any
+  permit icmp any any
+exit
+
+ip access-list extended VLAN162-ACL
+  permit ip 10.160.2.0 0.0.0.255 any
+  permit icmp any any
+exit
+
+! Reserved ACLs
+ip access-list extended VLAN170-ACL
+  permit ip any any
+exit
+
+ip access-list extended VLAN171-ACL
+  permit ip any any
+exit
+
+ip access-list extended VLAN172-ACL
+  permit ip any any
+exit
+
+! Multicast ACL
+ip access-list standard ACL-MULTICAST
+  permit 224.0.0.0 0.255.255.255
+
+!===============================================================================
+! ROUTE MAPS (Policy-Based Routing)
+!===============================================================================
+route-map EXPORT-ROUTES permit 10
+  match ip address 101
+  set as-path prepend 65001
+  set local-preference 200
+
+route-map EXPORT-ROUTES permit 20
+  set local-preference 100
+
+route-map IMPORT-ROUTES permit 10
+  match ip address 102
+  set as-path prepend 65001
+
+route-map IMPORT-ROUTES permit 20
+
+route-map LOCAL-PREFERENCE permit 10
+  match ip address 101
+  set local-preference 300
+
+route-map LOCAL-PREFERENCE permit 20
+  set local-preference 100
+
+!===============================================================================
+! QUALITY OF SERVICE (QoS) CONFIGURATION
+!===============================================================================
+class-map match-any VOICE
+  match ip dscp ef
+  match ip precedence 5
+
+class-map match-any VIDEO
+  match ip dscp af41
+  match ip dscp af42
+  match ip dscp af43
+
+class-map match-any CRITICAL-DATA
+  match ip dscp af31
+  match ip dscp af32
+
+class-map match-any BULK-DATA
+  match ip dscp af11
+  match ip dscp af12
+
+class-map match-any BEST-EFFORT
+  match ip dscp default
+
+policy-map CORE-POLICY
+  class VOICE
+    priority percent 20
+    police 10000000 2000000 conform-action transmit exceed-action drop
+  class VIDEO
+    bandwidth percent 30
+    queue-limit 512 packets
+  class CRITICAL-DATA
+    bandwidth percent 25
+    queue-limit 256 packets
+  class BULK-DATA
+    bandwidth percent 15
+    queue-limit 128 packets
+  class BEST-EFFORT
+    bandwidth percent 10
+    queue-limit 64 packets
+
+!===============================================================================
+! SNMP CONFIGURATION (Simple Network Management Protocol)
+!===============================================================================
+snmp-server community public ro ACL-SNMP-RO
+snmp-server community private rw ACL-SNMP-RW
+snmp-server contact Network-Admin@company.local
+snmp-server location Core-Switch-DataCenter-01
+snmp-server chassis-id CORE-6500-01
+
+snmp-server trap authentication
+snmp-server trap link-status
+snmp-server trap syslog
+snmp-server trap snmp linkdown linkup coldstart warmstart
+
+snmp-server enable traps snmp authentication
+snmp-server enable traps snmp linkdown linkup coldstart warmstart
+snmp-server enable traps syslog
+snmp-server host 10.150.1.10 version 2c private
+snmp-server host 10.150.1.11 version 2c private
+
+!===============================================================================
+! NETFLOW CONFIGURATION (Traffic Monitoring)
+!===============================================================================
+flow exporter NETFLOW-EXPORT
+  destination 10.150.1.15
+  source Vlan1
+  transport udp 2055
+  template data timeout 600
+
+flow monitor NETFLOW-MONITOR
+  record netflow ipv4 original-input
+  exporter NETFLOW-EXPORT
+  timeout inactive 30
+  timeout active 300
+
+sampler NETFLOW-SAMPLER
+  mode random 1 out-of 1000
+
+!===============================================================================
+! SYSLOG CONFIGURATION
+!===============================================================================
+logging host 10.150.1.20
+logging host 10.150.1.21
+logging trap informational
+logging facility local7
+logging origin-id hostname
+logging source-interface Vlan150
+
+!===============================================================================
+! NTP CONFIGURATION (Network Time Protocol)
+!===============================================================================
+ntp server 10.150.1.5 prefer
+ntp server 10.150.1.6
+ntp server 8.8.8.8
+ntp source Vlan1
+ntp authentication-key 1 md5 NTP_Key_2026 7
+ntp trusted-key 1
+ntp update-calendar
+
+!===============================================================================
+! DNS CONFIGURATION
+!===============================================================================
+ip name-server 10.150.1.30
+ip name-server 10.150.1.31
+ip name-server 8.8.8.8
+
+!===============================================================================
+! DHCP CONFIGURATION
+!===============================================================================
+ip dhcp excluded-address 10.10.0.1 10.10.0.50
+ip dhcp excluded-address 10.20.0.1 10.20.0.50
+ip dhcp excluded-address 10.100.0.1 10.100.0.50
+ip dhcp excluded-address 10.110.0.1 10.110.0.50
+ip dhcp excluded-address 10.120.0.1 10.120.0.50
+ip dhcp excluded-address 10.130.0.1 10.130.0.50
+ip dhcp excluded-address 10.140.0.1 10.140.0.50
+ip dhcp excluded-address 10.150.0.1 10.150.0.50
+ip dhcp excluded-address 10.170.0.1 10.170.0.50
+
+ip dhcp pool SERVERS-10
+  network 10.10.0.0 255.255.255.0
+  default-router 10.10.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DATABASE-20
+  network 10.20.0.0 255.255.255.0
+  default-router 10.20.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 30
+
+ip dhcp pool DEPARTMENTS-100
+  network 10.100.0.0 255.255.255.0
+  default-router 10.100.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 24
+
+ip dhcp pool BUILDING-A-110
+  network 10.110.0.0 255.255.255.0
+  default-router 10.110.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 24
+
+ip dhcp pool WIRELESS-130
+  network 10.130.0.0 255.255.255.0
+  default-router 10.130.0.254
+  dns-server 10.150.1.30 10.150.1.31
+  domain-name company.local
+  lease 8
+
+!===============================================================================
+! CRYPTO / VPN CONFIGURATION (IPSec)
+!===============================================================================
+! IKE Phase 1
+crypto isakmp policy 10
+  encr aes 256
+  hash sha
+  authentication pre-share
+  group 14
+  lifetime 3600
+
+crypto isakmp key IPSEC_PSK_2026 address 10.160.0.2
+
+! IKE Phase 2
+crypto ipsec transform-set CORE-TRANSFORM esp-aes 256 esp-sha-hmac
+  mode transport
+
+crypto ipsec profile CORE-IPSEC-PROFILE
+  set transform-set CORE-TRANSFORM
+  set pfs group14
+  set security-association lifetime seconds 1800
+
+! Tunnel Interface Configuration (Optional)
+interface Tunnel1
+  description IPSec Tunnel to Remote Site
+  ip address 172.16.0.1 255.255.255.0
+  tunnel source 10.160.0.1
+  tunnel destination 10.160.0.2
+  tunnel mode ipsec ipv4
+  tunnel protection ipsec profile CORE-IPSEC-PROFILE
+  no shutdown
+
+!===============================================================================
+! AAA CONFIGURATION (Authentication, Authorization, Accounting)
+!===============================================================================
+aaa new-model
+aaa authentication login default group tacacs+ local
+aaa authentication login LINE group tacacs+ local
+aaa authorization exec default group tacacs+ local
+aaa authorization commands 15 default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+
+tacacs-server host 10.150.1.40
+tacacs-server host 10.150.1.41
+tacacs-server key TACACS_Key_2026
+tacacs-server timeout 10
+tacacs-server directed-request
+
+username admin privilege 15 secret admin_pass_123
+username operator privilege 1 secret operator_pass_123
+
+!===============================================================================
+! RADIUS CONFIGURATION (Backup Authentication)
+!===============================================================================
+radius-server host 10.150.1.50
+radius-server host 10.150.1.51
+radius-server key RADIUS_Key_2026
+radius-server timeout 5
+radius-server retransmit 3
+
+!===============================================================================
+! LINE CONFIGURATION (VTY, CON, AUX)
+!===============================================================================
+line con 0
+  exec-timeout 15 0
+  password console_pass_123
+  logging synchronous
+  transport preferred telnet
+
+line vty 0 4
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh telnet
+
+line vty 5 15
+  exec-timeout 15 0
+  password telnet_pass_123
+  access-class ADMIN-TELNET in
+  logging synchronous
+  transport input ssh
+
+line aux 0
+  exec-timeout 0 0
+  transport input none
+
+!===============================================================================
+! TRACK CONFIGURATION (IP SLA Monitoring)
+!===============================================================================
+ip sla 1
+  icmp-echo 10.160.0.2 source-interface Vlan160
+  timeout 2000
+  frequency 10
+
+ip sla schedule 1 life forever start-time now
+
+track 1 ip sla 1 reachability
+  delay down 10 up 5
+
+!===============================================================================
+! ETHERNET CHANNEL / PORT CHANNEL CONFIGURATION
+!===============================================================================
+! Uplink Port Channel to Distribution Layer
+interface Port-channel 1
+  description Uplink to Distribution Switch 1
+  switchport mode trunk
+  switchport trunk encapsulation dot1q
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  speed 10000
+  duplex full
+  spanning-tree portfast disable
+  no shutdown
+
+interface Port-channel 2
+  description Uplink to Distribution Switch 2
+  switchport mode trunk
+  switchport trunk encapsulation dot1q
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 1,10-15,20-22,30-32,40-42,50-52,60-62,70-71,80-81,90-92,100-105,110-112,120-121,130-131,140-141,150-151,160-162,170-172
+  speed 10000
+  duplex full
+  spanning-tree portfast disable
+  no shutdown
+
+! Server Connections Port Channel
+interface Port-channel 3
+  description Server Farm Direct Connection
+  switchport mode trunk
+  switchport trunk encapsulation dot1q
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 10-15
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+! Database Connections Port Channel
+interface Port-channel 4
+  description Database Cluster Connection
+  switchport mode trunk
+  switchport trunk encapsulation dot1q
+  switchport trunk native vlan 1
+  switchport trunk allowed vlan 20-22
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+!===============================================================================
+! PHYSICAL INTERFACE CONFIGURATION (Sample)
+!===============================================================================
+! Configure physical interfaces for port channels
+interface GigabitEthernet1/1
+  description Link to Distribution Switch 1 - Port 1
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 1 mode active
+  speed 10000
+  duplex full
+  no shutdown
+
+interface GigabitEthernet1/2
+  description Link to Distribution Switch 1 - Port 2
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 1 mode active
+  speed 10000
+  duplex full
+  no shutdown
+
+interface GigabitEthernet1/3
+  description Link to Distribution Switch 2 - Port 1
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 2 mode active
+  speed 10000
+  duplex full
+  no shutdown
+
+interface GigabitEthernet1/4
+  description Link to Distribution Switch 2 - Port 2
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 2 mode active
+  speed 10000
+  duplex full
+  no shutdown
+
+interface GigabitEthernet2/1
+  description Server Direct Connection 1
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 3 mode active
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface GigabitEthernet2/2
+  description Server Direct Connection 2
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 3 mode active
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface GigabitEthernet2/3
+  description Database Connection 1
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 4 mode active
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+interface GigabitEthernet2/4
+  description Database Connection 2
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-group 4 mode active
+  speed 10000
+  duplex full
+  spanning-tree portfast
+  no shutdown
+
+!===============================================================================
+! MANAGEMENT INTERFACE
+!===============================================================================
+interface Management
+  ip address 10.150.0.10 255.255.255.0
+  no shutdown
+
+!===============================================================================
+! CONFIGURATION TERMINAL SETTINGS
+!===============================================================================
+end
+
+! Save Configuration
+write memory
+
+!===============================================================================
+! IP SCHEMA SUMMARY
+!===============================================================================
+! Total IP Subnets: 50 (/24 networks)
+! Network Range: 10.0.0.0/8
+! 
+! VLAN 1:    10.1.1.0/24     - Management
+! VLAN 10:   10.10.0.0/24    - Server Farm 10
+! VLAN 11:   10.10.1.0/24    - Server Farm 11
+! VLAN 12:   10.10.2.0/24    - Server Farm 12
+! VLAN 13:   10.10.3.0/24    - Server Farm 13
+! VLAN 14:   10.10.4.0/24    - Server Farm 14
+! VLAN 15:   10.10.5.0/24    - Server Farm 15
+! VLAN 20:   10.20.0.0/24    - Database Primary
+! VLAN 21:   10.20.1.0/24    - Database Secondary
+! VLAN 22:   10.20.2.0/24    - Database Replication
+! VLAN 30:   10.30.0.0/24    - DMZ External
+! VLAN 31:   10.30.1.0/24    - DMZ Internal
+! VLAN 32:   10.30.2.0/24    - DMZ Staging
+! VLAN 40:   10.40.0.0/24    - Security IDS/IPS
+! VLAN 41:   10.40.1.0/24    - Firewall Management
+! VLAN 42:   10.40.2.0/24    - Security Monitoring
+! VLAN 50:   10.50.0.0/24    - Backup Storage
+! VLAN 51:   10.50.1.0/24    - Backup Replication
+! VLAN 52:   10.50.2.0/24    - Archive Storage
+! VLAN 60:   10.60.0.0/24    - Voice VoIP 10
+! VLAN 61:   10.60.1.0/24    - Voice VoIP 11
+! VLAN 62:   10.60.2.0/24    - Voice VoIP 12
+! VLAN 70:   10.70.0.0/24    - Video Streaming
+! VLAN 71:   10.70.1.0/24    - Video Conferencing
+! VLAN 80:   10.80.0.0/24    - Guest Network
+! VLAN 81:   10.80.1.0/24    - Guest Secure
+! VLAN 90:   10.90.0.0/24    - Development Lab
+! VLAN 91:   10.90.1.0/24    - Testing Lab
+! VLAN 92:   10.90.2.0/24    - Staging Lab
+! VLAN 100:  10.100.0.0/24   - Finance Department
+! VLAN 101:  10.100.1.0/24   - HR Department
+! VLAN 102:  10.100.2.0/24   - Marketing Department
+! VLAN 103:  10.100.3.0/24   - Sales Department
+! VLAN 104:  10.100.4.0/24   - Engineering Department
+! VLAN 105:  10.100.5.0/24   - Operations Department
+! VLAN 110:  10.110.0.0/24   - Building A Floor 1
+! VLAN 111:  10.110.1.0/24   - Building A Floor 2
+! VLAN 112:  10.110.2.0/24   - Building A Floor 3
+! VLAN 120:  10.120.0.0/24   - Building B Floor 1
+! VLAN 121:  10.120.1.0/24   - Building B Floor 2
+! VLAN 130:  10.130.0.0/24   - Wireless SSID Corp
+! VLAN 131:  10.130.1.0/24   - Wireless SSID Guest
+! VLAN 140:  10.140.0.0/24   - IoT Sensors
+! VLAN 141:  10.140.1.0/24   - IoT Devices
+! VLAN 150:  10.150.0.0/24   - Management OOB
+! VLAN 151:  10.150.1.0/24   - Monitoring SNMP
+! VLAN 160:  10.160.0.0/24   - WAN Link 1 (MPLS)
+! VLAN 161:  10.160.1.0/24   - WAN Link 2 (BGP)
+! VLAN 162:  10.160.2.0/24   - WAN Link 3 (Backup)
+! VLAN 170:  10.170.0.0/24   - Reserved Future 1
+! VLAN 171:  10.170.1.0/24   - Reserved Future 2
+! VLAN 172:  10.170.2.0/24   - Reserved Future 3
+!
+! Gateway IPs (HSRP Virtual IPs): x.x.x.254
+! DHCP Pools configured for user access VLANs
+! Reserved IPs: x.x.x.1 - x.x.x.50
+!===============================================================================
