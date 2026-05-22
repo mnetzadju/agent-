@@ -1,0 +1,424 @@
+================================================================================
+EXTENDED ACCESS-LIST CONFIGURATION
+Permitting Branch Subnet to Access Head Office Network
+================================================================================
+
+!===============================================================================
+! SCENARIO: Branch Office Access to Head Office
+!===============================================================================
+! 
+! NETWORK TOPOLOGY:
+! - Branch Office Subnet: 10.110.0.0/24 (Building A Floor 1)
+! - Head Office Subnet: 10.100.0.0/24 (Finance Department)
+! - Additional Head Office Subnets: 10.100.1.0/24 to 10.100.5.0/24
+! - Interconnected via WAN Link
+!
+!===============================================================================
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH TO HEAD OFFICE
+!===============================================================================
+
+! Basic Extended ACL - Permit all protocols from Branch to Head Office
+ip access-list extended BRANCH-TO-HEADOFFICE
+  remark Branch Office Access to Head Office - Permit All Protocols
+  permit ip 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH TO SPECIFIC HEAD OFFICE SERVICES
+!===============================================================================
+
+! Granular ACL - Permit specific services from Branch to Head Office
+ip access-list extended BRANCH-TO-HEADOFFICE-GRANULAR
+  remark Branch to Head Office - Specific Services Only
+  
+  ! Finance Department (VLAN 100 - 10.100.0.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.0.255 eq 80
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.0.255 eq 3306
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.0.255 eq 1433
+  
+  ! HR Department (VLAN 101 - 10.100.1.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.1.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.1.0 0.0.0.255 eq 80
+  permit tcp 10.110.0.0 0.0.0.255 10.100.1.0 0.0.0.255 eq 389
+  
+  ! Marketing Department (VLAN 102 - 10.100.2.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.2.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.2.0 0.0.0.255 eq 80
+  
+  ! Sales Department (VLAN 103 - 10.100.3.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.3.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.3.0 0.0.0.255 eq 80
+  permit tcp 10.110.0.0 0.0.0.255 10.100.3.0 0.0.0.255 eq 3389
+  
+  ! Engineering Department (VLAN 104 - 10.100.4.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.4.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.4.0 0.0.0.255 eq 80
+  permit tcp 10.110.0.0 0.0.0.255 10.100.4.0 0.0.0.255 eq 22
+  permit tcp 10.110.0.0 0.0.0.255 10.100.4.0 0.0.0.255 eq 8080
+  
+  ! Operations Department (VLAN 105 - 10.100.5.0/24)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.5.0 0.0.0.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.5.0 0.0.0.255 eq 80
+  permit udp 10.110.0.0 0.0.0.255 10.100.5.0 0.0.0.255 eq 161
+  
+  ! ICMP (Ping/Traceroute)
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 echo
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 echo-reply
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 unreachable
+  
+  ! Deny everything else
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH WITH PORT RANGES
+!===============================================================================
+
+! ACL with dynamic port ranges for multiple services
+ip access-list extended BRANCH-TO-HEADOFFICE-PORTS
+  remark Branch to Head Office - Multiple Ports/Protocols
+  
+  ! Web Services (HTTP/HTTPS)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 80 443
+  
+  ! Email Services (POP3, IMAP, SMTP)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 25 587
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 110 143
+  
+  ! Database Services
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 3306
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 1433
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 5432
+  
+  ! DNS
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 53
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 53
+  
+  ! SSH/Telnet
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 22 23
+  
+  ! RDP (Remote Desktop)
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 3389
+  
+  ! VPN
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 500
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 4500
+  permit esp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! SNMP (Network Management)
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 161
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 162
+  
+  ! ICMP
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! Deny All Others
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH WITH ESTABLISHED CONNECTIONS
+!===============================================================================
+
+! ACL allowing established connections and new outbound traffic
+ip access-list extended BRANCH-TO-HEADOFFICE-STATEFUL
+  remark Branch to Head Office - Stateful with Established Connections
+  
+  ! Allow outbound from Branch
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 1 65535 established
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 1 65535
+  
+  ! Allow UDP with established state
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 1 65535
+  
+  ! Allow ICMP
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! Deny Everything Else
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH - DENY RETURN TRAFFIC TO BRANCH
+!===============================================================================
+
+! Inbound ACL to prevent unsolicited traffic from Head Office to Branch
+ip access-list extended HEADOFFICE-TO-BRANCH-DENY
+  remark Deny unsolicited Head Office traffic back to Branch (Stateless)
+  
+  ! Allow established and related connections
+  permit tcp 10.100.0.0 0.0.5.255 10.110.0.0 0.0.0.255 established
+  
+  ! Allow ICMP responses
+  permit icmp 10.100.0.0 0.0.5.255 10.110.0.0 0.0.0.255 echo-reply
+  permit icmp 10.100.0.0 0.0.5.255 10.110.0.0 0.0.0.255 unreachable
+  
+  ! Deny everything else
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT SPECIFIC USERS FROM BRANCH
+!===============================================================================
+
+! ACL restricting access to specific user groups/departments
+ip access-list extended BRANCH-FINANCE-TO-HEADOFFICE
+  remark Branch Finance Users to Head Office Finance Systems
+  
+  ! Finance application on port 8443
+  permit tcp 10.110.0.50 0.0.0.10 10.100.0.0 0.0.0.255 eq 8443
+  
+  ! Database access
+  permit tcp 10.110.0.50 0.0.0.10 10.100.0.0 0.0.0.255 eq 3306
+  permit tcp 10.110.0.50 0.0.0.10 10.100.0.0 0.0.0.255 eq 1433
+  
+  ! Web portal
+  permit tcp 10.110.0.50 0.0.0.10 10.100.0.0 0.0.0.255 eq 443
+  
+  ! ICMP for diagnostics
+  permit icmp 10.110.0.50 0.0.0.10 10.100.0.0 0.0.0.255
+  
+  ! Deny all others
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH WITH TIME-BASED ACCESS
+!===============================================================================
+
+! Time-based ACL for restricted business hours access
+ip access-list extended BRANCH-TO-HEADOFFICE-BUSINESS-HOURS
+  remark Branch to Head Office - Business Hours Only (Commented for reference)
+  ! NOTE: Use with time-range to restrict access to specific time periods
+  
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 443
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 80
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 3306
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 1433
+  permit icmp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  deny ip any any log
+
+! Time-range configuration (optional)
+time-range BUSINESS-HOURS
+  periodic weekdays 08:00 to 18:00
+  exit
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT MULTIPLE BRANCH SUBNETS TO HEAD OFFICE
+!===============================================================================
+
+! ACL for multiple branch locations accessing head office
+ip access-list extended MULTI-BRANCH-TO-HEADOFFICE
+  remark Multiple Branches to Head Office Access
+  
+  ! Branch Office Building A (10.110.0.0/24)
+  permit ip 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! Branch Office Building B (10.120.0.0/24)
+  permit ip 10.120.0.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! Branch Office Building B Floor 2 (10.120.1.0/24)
+  permit ip 10.120.1.0 0.0.0.255 10.100.0.0 0.0.5.255
+  
+  ! ICMP for all branches
+  permit icmp 10.110.0.0 0.0.1.255 10.100.0.0 0.0.5.255
+  
+  ! Deny all others
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: PERMIT BRANCH WITH QoS MARKING
+!===============================================================================
+
+! ACL with QoS/ToS marking for traffic prioritization
+ip access-list extended BRANCH-TO-HEADOFFICE-QOS
+  remark Branch to Head Office - QoS Traffic Marking
+  
+  ! High Priority - Critical Business Applications
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.0.255 eq 8443 dscp ef
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 eq 3306 dscp cs3
+  
+  ! Medium Priority - Standard Web Traffic
+  permit tcp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 80 443 dscp cs1
+  
+  ! Voice/VoIP (Lower delay)
+  permit udp 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 range 16384 32767 dscp ef
+  
+  ! General Traffic
+  permit ip 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 dscp default
+  
+  ! Deny all others
+  deny ip any any log
+
+!===============================================================================
+! EXTENDED ACCESS-LIST: DENY BRANCH TO HEAD OFFICE (NEGATIVE EXAMPLE)
+!===============================================================================
+
+! ACL that DENIES Branch access (for comparison/testing)
+ip access-list extended BRANCH-TO-HEADOFFICE-DENY
+  remark DENY Branch to Head Office - Isolation
+  
+  deny ip 10.110.0.0 0.0.0.255 10.100.0.0 0.0.5.255 log
+  permit ip any any
+
+!===============================================================================
+! APPLICATION OF ACLs ON INTERFACES
+!===============================================================================
+
+! Apply ACL to a VLAN (Ingress - Inbound Traffic)
+interface Vlan110
+  description Building A Floor 1 (Branch)
+  ip access-group BRANCH-TO-HEADOFFICE in
+  exit
+
+! Apply ACL to Outbound Direction
+interface Vlan100
+  description Finance Department (Head Office)
+  ip access-group BRANCH-TO-HEADOFFICE out
+  exit
+
+! Alternative: Apply to physical interface
+interface port-channel 10
+  description WAN Link to Branch
+  ip access-group BRANCH-TO-HEADOFFICE in
+  exit
+
+!===============================================================================
+! LOGGING CONFIGURATION FOR ACL DEBUGGING
+!===============================================================================
+
+! Enable logging for denied packets
+logging on
+logging buffered 8192 informational
+logging trap informational
+
+! Log access-list matches
+access-list logging updates
+logging update-threshold 1
+
+! Syslog server for ACL logs
+logging host 10.150.1.20
+logging host 10.150.1.21
+logging facility local7
+
+!===============================================================================
+! MONITORING & VERIFICATION COMMANDS
+!===============================================================================
+
+! Verify ACL configuration
+show access-lists BRANCH-TO-HEADOFFICE
+show access-lists BRANCH-TO-HEADOFFICE-GRANULAR
+show access-lists BRANCH-TO-HEADOFFICE-PORTS
+
+! Check ACL statistics (packets matched)
+show access-lists BRANCH-TO-HEADOFFICE | include permit
+show access-lists BRANCH-TO-HEADOFFICE | include deny
+
+! Verify ACL on interface
+show ip access-lists interface Vlan110
+show ip access-lists interface port-channel 10
+
+! Display active ACLs
+show ip access-lists
+show access-list 110
+show access-list 120
+
+! Real-time debugging
+debug ip access-list
+undebug all
+
+! Syslog review
+show logging | include Access
+
+!===============================================================================
+! BEST PRACTICES FOR BRANCH-TO-HEAD OFFICE ACL
+!===============================================================================
+
+! 1. Use Descriptive Names:
+!    - BRANCH-TO-HEADOFFICE (Clear source/destination)
+!
+! 2. Order ACL Lines by Priority:
+!    - Place more specific permits first
+!    - Place general permits second
+!    - Place denies last
+!
+! 3. Use Named Extended ACLs (not numbered)
+!    - Easier to modify and understand
+!    - Supports insertion/modification without re-applying
+!
+! 4. Include Logging:
+!    - Log denied traffic for troubleshooting
+!    - Helps identify attempted unauthorized access
+!
+! 5. Test Before Production:
+!    - Verify connectivity before applying
+!    - Use temporary ACLs in test environment
+!
+! 6. Document Port Numbers:
+!    - Include comments for protocols/applications
+!    - Reference service documentation
+!
+! 7. Regular Audits:
+!    - Review ACLs quarterly
+!    - Remove obsolete rules
+!    - Update for new applications
+!
+! 8. Backup Configuration:
+!    - Save running-config regularly
+!    - Version control for changes
+!
+! 9. Combine with Firewall:
+!    - ACL ≠ Firewall (stateless vs stateful)
+!    - Use firewall for complex policies
+!    - Use ACL for simple permit/deny rules
+!
+! 10. Performance Consideration:
+!     - Longer ACLs = More CPU processing
+!     - Use wildcard masks efficiently
+!     - Consider traffic volume
+
+!===============================================================================
+! TRAFFIC FLOW DIAGRAM
+!===============================================================================
+
+! 
+!     BRANCH OFFICE                      HEAD OFFICE
+!     10.110.0.0/24                      10.100.0.0/24 - 10.100.5.0/24
+!     [Branch Users]                     [Finance, HR, Marketing, Sales, Eng, Ops]
+!           |                                    ^
+!           |                                    |
+!           v                                    |
+!     [VLAN 110]                          [VLAN 100-105]
+!           |                                    ^
+!           |                                    |
+!           v                                    |
+!     Port-Channel 10 ----[WAN LINK]----> Port-Channel 10
+!     (BRANCH-TO-HEADOFFICE ACL APPLIED HERE)
+!           |
+!           v
+!     [PERMITTED TRAFFIC]
+!     - TCP 80, 443 (Web)
+!     - TCP 3306, 1433 (Database)
+!     - TCP 22, 23 (SSH/Telnet)
+!     - ICMP (Ping/Traceroute)
+!     - UDP 53 (DNS)
+!     - UDP 161, 162 (SNMP)
+!     - TCP 500, UDP 4500 (VPN)
+!
+!     [DENIED TRAFFIC]
+!     - RDP (3389) - Except for authorized users
+!     - Peer-to-peer protocols
+!     - Multicast (unless needed)
+!     - Any unauthorized ports
+
+!===============================================================================
+! END OF CONFIGURATION
+!===============================================================================
+
+! Save configuration
+copy run start
+
+! Verify final setup
+show access-lists
+show ip access-lists interface
+
+! End
